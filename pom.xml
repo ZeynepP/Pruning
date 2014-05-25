@@ -45,6 +45,12 @@
 
     
   </dependencies>
+   <scm>
+        <connection>scm:git:git@github.com:ZeynepP/Pruning.git</connection>
+        <developerConnection>scm:git:git@github.com:ZeynepP/Pruning.git</developerConnection>
+        <url>git@github.com:ZeynepP/Pruning.git</url>
+    </scm>
+    
   <repositories>
   <repository> 
 	    <id>javautil</id> 
