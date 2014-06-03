@@ -27,7 +27,8 @@ public class PruneMethod_IPU extends PruningMethod {
 			DocsAndPositionsEnum docsAndPositionsEnum,
 			Term tempterm) throws IOException 
 	{
-		
+		TermsEnum termEnum2  = allterms.iterator(null);
+		termEnum2.seekExact(tempterm.bytes(), true);
 		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		int docid;
 		IntArrayList keys = new IntArrayList();

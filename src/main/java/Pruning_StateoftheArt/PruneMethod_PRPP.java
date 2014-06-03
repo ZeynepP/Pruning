@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 
 import Pruning.Quantiles.MainQuantiles;
@@ -33,7 +34,8 @@ public class PruneMethod_PRPP extends PruningMethod {
 	OpenIntDoubleHashMap GetPostingsScores(
 			DocsAndPositionsEnum docsAndPositionsEnum,
 			Term tempterm) throws IOException {
-		
+		TermsEnum termEnum2  = allterms.iterator(null);
+		termEnum2.seekExact(tempterm.bytes(), true);
 		OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		int docid;
 		IntArrayList keys = new IntArrayList();

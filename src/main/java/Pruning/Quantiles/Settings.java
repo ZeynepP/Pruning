@@ -185,12 +185,12 @@ public class Settings {
 		Properties configFile = new Properties();
 		configFile.load(new FileInputStream(new File(path)));		
 		
-		datecount = Integer.parseInt(configFile.getProperty("datecount"));
+		//datecount = Integer.parseInt(configFile.getProperty("datecount"));
 		docNameField = configFile.getProperty("docNameField");
 		content = configFile.getProperty("content");
 		datefield = configFile.getProperty("datefield");
-		dateinit = Long.parseLong( configFile.getProperty("dateinit"));
-		rangefield = configFile.getProperty("rangefield");
+		//dateinit = Long.parseLong( configFile.getProperty("dateinit"));
+		//rangefield = configFile.getProperty("rangefield");
 		machine = configFile.getProperty("machine"); 
 		noPruningIndex =  configFile.getProperty("noPruningIndex");  
 	

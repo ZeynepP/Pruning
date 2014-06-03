@@ -33,7 +33,8 @@ public class PruneMethod_ECIR2N2P extends PruningMethod {
 	@Override
 	OpenIntDoubleHashMap GetPostingsScores( DocsAndPositionsEnum docsAndPositionsEnum,Term tempterm) throws IOException {
 		// TODO Auto-generated method stub
-		
+		TermsEnum termEnum2  = allterms.iterator(null);
+		termEnum2.seekExact(tempterm.bytes(), true);
 		OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		int docid;
 		IntArrayList keys = new IntArrayList();

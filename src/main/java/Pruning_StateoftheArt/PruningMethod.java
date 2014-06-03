@@ -2,6 +2,7 @@ package Pruning_StateoftheArt;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,9 +23,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.SmallFloat;
 
-
+import Pruning.Quantiles.Init;
 import Pruning.Quantiles.Settings;
 import Pruning.Quantiles.Utils;
+import cern.colt.list.DoubleArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
@@ -53,7 +55,7 @@ public abstract class PruningMethod {
     
 	int overallcounter = 0;
 	float avgdl ;
-	TermsEnum termEnum2 ;
+	
 	TermsEnum termEnum ;
 	Terms allterms ;
 	long sumTotalTermFreq;
@@ -80,7 +82,7 @@ public abstract class PruningMethod {
 			allterms = fields.terms(Settings.content);
 			termEnum = allterms.iterator(null);
 			sumTotalTermFreq = allterms.getSumTotalTermFreq();//collection lenght |C|
-			termEnum2 = allterms.iterator(null);
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -101,11 +103,14 @@ public abstract class PruningMethod {
 	
 	public Map<Term,OpenIntDoubleHashMap> GetPostingsForTerm(Term tempterm) throws IOException
 	{
+		TermsEnum termEnum2  = allterms.iterator(null);
 
 		Map<Term,OpenIntDoubleHashMap> result = new HashMap<Term, OpenIntDoubleHashMap>();
 		OpenIntDoubleHashMap temp;
 		DocsAndPositionsEnum docsAndPositionsEnum  = MultiFields.getTermPositionsEnum(ir,MultiFields.getLiveDocs(ir), Settings.content, tempterm.bytes());
 
+		//System.out.println(tempterm.text());
+		
 	 	termEnum2.seekExact(tempterm.bytes(), true);
 	 	overallcounter += termEnum2.docFreq();
 
@@ -113,7 +118,12 @@ public abstract class PruningMethod {
 	 	{
 	 		temp = GetPostingsScores(docsAndPositionsEnum,tempterm);
 	 		if(temp!=null)
-	 			result.put(tempterm,temp);
+	 		{
+		 			result.put(tempterm,temp);
+	 		}
+	 		
+	 		
+	 		
 	 	}
 		
 		return result;
