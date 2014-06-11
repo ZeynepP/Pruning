@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import java.io.IOException;
 
@@ -15,9 +15,9 @@ import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
-public class PruneMethod_IPU extends PruningMethod {
+public class IPU extends PruningMethod {
 
-	public PruneMethod_IPU(boolean isForQuantiles, String indexdir) throws IOException {
+	public IPU(boolean isForQuantiles, String indexdir) throws IOException {
 		super(isForQuantiles,indexdir);
 
 	}

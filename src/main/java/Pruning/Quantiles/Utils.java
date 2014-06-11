@@ -26,10 +26,10 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.Version;
 
-import Pruning_StateoftheArt.PruneMethod_ECIR2N2P;
-import Pruning_StateoftheArt.PruneMethod_IPU;
-import Pruning_StateoftheArt.PruneMethod_PRPP;
-import Pruning_StateoftheArt.PruneMethod_TCP;
+import Pruning.Methods.ECIR2N2P;
+import Pruning.Methods.IPU;
+import Pruning.Methods.PRPP;
+import Pruning.Methods.TCP;
 
 
 
@@ -53,42 +53,25 @@ public class Utils {
 		if(type == 0)
 		{
 			filename = "TCP" ;
-			Init.pruningmethod = new PruneMethod_TCP(isquantiles,indexdir,10);
+			Init.pruningmethod = new TCP(isquantiles,indexdir,10);
 		}
 		else if(type == 1)
 		{
 			filename = "IPU";
-			Init.pruningmethod = new PruneMethod_IPU(isquantiles,indexdir);
+			Init.pruningmethod = new IPU(isquantiles,indexdir);
 		}
 		else if(type == 2)
 		{
 			filename = "2N2P";
-			Init.pruningmethod = new PruneMethod_ECIR2N2P(isquantiles,indexdir);
+			Init.pruningmethod = new ECIR2N2P(isquantiles,indexdir);
 		}
-		/*else if(type == 3)
-		{
-			filename = "Simple"+MainQuantiles.alpha+Settings.withTF;
-			Init.pruningmethod = new PruneMethod_DiversificationBased(type);
-		}
-		else  if(type ==4)
-		{
-			filename = "Sliding"+MainQuantiles.alpha+Settings.withTF;
-			Init.pruningmethod = new PruneMethod_DiversificationBased(type);
-		}
-		else if(type == 5)
-		{
-			filename = "Dynamic"+MainQuantiles.alpha+Settings.withTF;
-			Init.pruningmethod = new PruneMethod_DiversificationBased(type);
-		}*/
 		else if(type == -1)
 		{
 			filename = "PRP";
-			Init.pruningmethod = new PruneMethod_PRPP(isquantiles,indexdir);
+			Init.pruningmethod = new PRPP(isquantiles,indexdir);
 		}
-		else if(type == -2)
-			filename = "Random";
-		
-	
+
+
 		
 		return filename;
 		

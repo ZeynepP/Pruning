@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import java.io.IOException;
 
@@ -15,10 +15,10 @@ import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
-public class PruneMethod_TCP  extends PruningMethod {
+public class TCP  extends PruningMethod {
 
 	int topk = 10;
-	public PruneMethod_TCP(boolean isforquantiles, String indexdir, int topk) throws IOException {
+	public TCP(boolean isforquantiles, String indexdir, int topk) throws IOException {
 		
 		super(isforquantiles,indexdir);
 		this.topk=topk;

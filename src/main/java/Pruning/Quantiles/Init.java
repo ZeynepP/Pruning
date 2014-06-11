@@ -38,14 +38,14 @@ import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import Pruning_StateoftheArt.PruningMethod;
+import Pruning.Methods.PruningMethod;
+import cern.colt.Arrays;
 import cern.colt.list.DoubleArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
 public class Init {
-	
-	
+
 	public MetricSampleQuantiles metrics ;
 	static final MetricQuantile[] quantiles = {new MetricQuantile(0.90, 0.010),
 	      new MetricQuantile(0.80, 0.020), new MetricQuantile(0.70, 0.030),
@@ -63,6 +63,8 @@ public class Init {
 	public static PruningMethod pruningmethod;
 	int type;
 	String outputdir;
+	
+	
 	@SuppressWarnings("deprecation")
 	public Init(String ts, int type, String output) throws Exception 
 	{
@@ -74,7 +76,7 @@ public class Init {
 		GetVocabulary();
 	}
 
-
+ // To run different approaches with the same sampling 
 	public void UpdateSettings(String ts,int type) throws IOException
 	{
 		this.type= type;
@@ -91,7 +93,7 @@ public class Init {
 					
 			for(int i=0;i<terms.size();i++)
 			{ 
-				term = terms.get(i);
+				term = terms.get(i).trim();
 				final Term tempterm =  new Term( Settings.content,term);
 				tasks.add(new Callable< ArrayList>(){
 
@@ -115,12 +117,15 @@ public class Init {
 			for (Future<ArrayList> fut :list ) 
 			{
 				ArrayList<Double> r = (ArrayList<Double>) fut.get();
-				if(r!=null&r.size()>0 )
+				if(r!=null)
 				{
-					for(int i=0;i<r.size();i++)
+					if(r.size()>0 )
 					{
-						metrics.insert((double)r.get(i));
-						
+						for(int i=0;i<r.size();i++)
+						{
+							metrics.insert((double)r.get(i));
+							
+						}
 					}
 					
 				}
@@ -128,19 +133,26 @@ public class Init {
 			
 
 			executor.shutdown(); 
-
+			System.out.println("terms first 1000000");
 			GetThreshold(true);
 
 	}
 
-	  
 	
 	public void GetVocabulary() throws CorruptIndexException, IOException, DataFormatException, ParseException
 	{
 		
+		// Reading from file
+		List voc =  FileUtils.readLines(new File("/home/pehlivanz/vocabularyPWA.csv"));
+		String[] t = ((String)voc.get(0)).split(",");
 		
-		Set<String> tempterms = new HashSet<String>(100000000);
-		String[] temp ;
+		Collections.addAll(terms, ((String)voc.get(0)).split(","));
+		Collections.shuffle(terms);
+		terms = terms.subList(0, 1500000);
+		
+	/*	String[] temp ;
+	 * Set<String> tempterms = new HashSet<String>(100000000);
+	
 		List<String> termssampling = new ArrayList<String>();
 		Pattern p = Pattern.compile("-?\\d+");
 		Pattern p2 =  Pattern.compile("[^\\p{L}\\p{Nd}]");
@@ -150,8 +162,8 @@ public class Init {
 			
 		allterms = pruningmethod.fields.terms(Settings.content);
 		termEnum = allterms.iterator(null);
-			
-			
+				
+		
 		while (termEnum.next()!=null)
 		{ 
 			//if(!termEnum.term().utf8ToString().contains("_") &&!termEnum.term().utf8ToString().contains("?") &&!termEnum.term().utf8ToString().contains(":")&&!termEnum.term().utf8ToString().contains("."))
@@ -178,7 +190,7 @@ public class Init {
 			
 		}
 			
-			
+	   FileUtils.writeStringToFile(new File("/home/pehlivanz/vocabularyPWA.csv"),	Arrays.toString(terms.toArray()));	
 		/*	
 		terms.addAll(tempterms);// because the other one is set no duplicates
 		Collections.shuffle(terms);

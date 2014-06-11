@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import java.io.IOException;
 
@@ -14,11 +14,11 @@ import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
-public class PruneMethod_ECIR2N2P extends PruningMethod {
+public class ECIR2N2P extends PruningMethod {
 	
 	float  sumTotalTermFreq;
 
-	public PruneMethod_ECIR2N2P(boolean isForQuantiles, String indexdir) throws IOException {
+	public ECIR2N2P(boolean isForQuantiles, String indexdir) throws IOException {
 		
 		super(isForQuantiles,indexdir);
 		try {

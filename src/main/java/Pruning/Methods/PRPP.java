@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import java.io.IOException;
 
@@ -13,12 +13,12 @@ import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
-public class PruneMethod_PRPP extends PruningMethod {
+public class PRPP extends PruningMethod {
 
 	double mean;
 	double sd;
 
-	public PruneMethod_PRPP(boolean isforquantiles,String indexdir) throws IOException {
+	public PRPP(boolean isforquantiles,String indexdir) throws IOException {
 		
 		super(isforquantiles,indexdir);
 

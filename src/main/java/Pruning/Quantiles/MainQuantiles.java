@@ -18,27 +18,33 @@ public class MainQuantiles {
 
    	    String config = args[0];
 		
-		//prunetype =  Integer.valueOf(args[1]);
+		//prunetype =  Integer.valueOf(args[2]);
 	  // TO use same sampling for all types / same terms / I am doing all in once
 	    
 	    Settings.InstallSettings(config);
-	   
-	    prunetype = 0;
+	    System.out.println("STARTING");
+	    
+	    prunetype = 1;
+	    System.out.println(prunetype+ " ******** ");
 	    Init init  = new Init(Settings.noPruningIndex, prunetype, args[1]);
 	    init.run();
 	    
-	    prunetype = 1;
-	    init.UpdateSettings(Settings.noPruningIndex, prunetype);
-	    init.run();
-	    
 	    prunetype = 2;
+	    System.out.println(prunetype+ " ******** ");
 	    init.UpdateSettings(Settings.noPruningIndex, prunetype);
 	    init.run();
 	    
 	    prunetype = -1;
-	  //  Init init  = new Init(Settings.noPruningIndex, -1, args[1]);
+	    System.out.println(prunetype+ " ******** ");
 	    init.UpdateSettings(Settings.noPruningIndex, prunetype);
 	    init.run();
+	    
+	    prunetype = 0;
+	    System.out.println(prunetype+ " ******** ");
+	    init.UpdateSettings(Settings.noPruningIndex, prunetype);
+	    init.run();
+
+	   
 
 		System.out.println("OVER OVER");
 	

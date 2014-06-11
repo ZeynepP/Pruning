@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +21,7 @@ import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.SmallFloat;
 
 import Pruning.Quantiles.Init;
@@ -32,13 +33,44 @@ import cern.colt.map.OpenIntDoubleHashMap;
 
 public abstract class PruningMethod {
 
-	IndexReader ir ;
+	public IndexReader ir ;
 	IndexSearcher searcher;
 	Directory dir2 ;
     CollectionStatistics collectionStats ;
     public Fields fields;
     IndexReaderContext irc;
 	
+    
+    public enum PruningType 
+	{
+		  Random(-2),
+		  PRP(-1),
+		  CARMEL(0),
+		  CIKM_IPU(1),
+		  ECIR_2N2P(2),
+		  SIMPLE(3),
+		  SLIDING(4),
+		  DYNAMIC(5),
+		  QUANTILES(6),
+		  KLAUS(7),
+		  CDFGMM(8),
+		  ECIRWINDOW(9),
+		  GREEDYOPT(10),
+		  BM25WINDOW(11);
+		  
+		  private int type;
+		 
+		  private PruningType (int value)
+		  {
+		    this.type = value;
+		  }
+		 
+		  public int getPruningTypeValue() {
+		    return type;
+		  }
+		
+		
+	}
     
     public static final float[] NORM_TABLE = new float[256];
 
@@ -103,16 +135,16 @@ public abstract class PruningMethod {
 	
 	public Map<Term,OpenIntDoubleHashMap> GetPostingsForTerm(Term tempterm) throws IOException
 	{
-		TermsEnum termEnum2  = allterms.iterator(null);
+		//TermsEnum termEnum2  = allterms.iterator(null);
 
 		Map<Term,OpenIntDoubleHashMap> result = new HashMap<Term, OpenIntDoubleHashMap>();
 		OpenIntDoubleHashMap temp;
 		DocsAndPositionsEnum docsAndPositionsEnum  = MultiFields.getTermPositionsEnum(ir,MultiFields.getLiveDocs(ir), Settings.content, tempterm.bytes());
 
-		//System.out.println(tempterm.text());
+	//	System.out.println(tempterm.text());
 		
-	 	termEnum2.seekExact(tempterm.bytes(), true);
-	 	overallcounter += termEnum2.docFreq();
+	 	//termEnum2.seekExact(tempterm.bytes(), true);
+	 	//overallcounter += termEnum2.docFreq();
 
 	 	if(docsAndPositionsEnum!=null)
 	 	{

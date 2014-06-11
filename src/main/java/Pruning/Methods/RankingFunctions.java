@@ -1,4 +1,4 @@
-package Pruning_StateoftheArt;
+package Pruning.Methods;
 
 import org.apache.lucene.util.SmallFloat;
 
