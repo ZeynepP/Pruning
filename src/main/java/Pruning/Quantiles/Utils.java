@@ -79,28 +79,6 @@ public class Utils {
 		
 	}
 	
-	public static int GetIndexDate(String date)
-	{
 
-		try{
-			int result = (int) (((Long.parseLong(date) / 1000L) - Settings.dateinit)/(86400L ));
-			if(result >  Settings.datecount )//516200
-				result = Settings.datecount;
-			if(result <0 ) 
-			{
-				result = 0;//it can happen for the queries smaller than 6th century
-			}
-			return result;
-		}
-		catch(Exception ex)
-		{
-			System.out.println(date);
-		}
-
-		return 0;
-		
-	}
-	
-	
 
 }

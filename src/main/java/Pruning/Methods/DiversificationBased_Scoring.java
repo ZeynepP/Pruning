@@ -8,6 +8,7 @@ import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 
+import Pruning.Experiments.Settings;
 import cern.colt.function.IntDoubleProcedure;
 import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
@@ -46,17 +47,13 @@ public class DiversificationBased_Scoring{
 			{	
 					dates= temp[i].split("_");
 					start = DiversificationBased_Utils.GetIndexDate(dates[0],dateinit,datecount);
-					end =  DiversificationBased_Utils.GetIndexDate(dates[1],dateinit,datecount);
+					if(Settings.collectiontype ==1)//WIKI
+						end =  DiversificationBased_Utils.GetIndexDate(dates[1],dateinit,datecount);
+					else end = start;
 					if(end<start) end = start+1;
 					
-					if(collectiontype == 1)
-					{
-						tempmap =aspects.subRangeMap(Range.closed(start,end));
-					}
-					else
-					{
-						tempmap =aspects.subRangeMap(Range.closed(Long.parseLong( dates[0]),Long.parseLong( dates[0])));//3 months
-					}
+					tempmap =aspects.subRangeMap(Range.closed(start,end));
+				
 
 					Iterator it = tempmap.asMapOfRanges().values().iterator();
 					while(it.hasNext())
@@ -104,7 +101,7 @@ public class DiversificationBased_Scoring{
 			    return true;
 			}
 		};
-
+		mapdocscore.forEachPair( p);
 		
 		IntArrayList keys = new IntArrayList();
 		String result = "";
@@ -113,7 +110,7 @@ public class DiversificationBased_Scoring{
 		
 		for(int i =0;i<keys.size();i++)
 			result = result + "," + keys.get(i);
-		FileUtils.writeStringToFile(new File("/home/pehlivanz/PWA/terms/"+ type + "_"+ term + ".txt"), result);
+		FileUtils.writeStringToFile(new File(Settings.termsfolder + type + "_"+ term + ".txt"), result);
 		return mapdistance;
 		
 

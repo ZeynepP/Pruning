@@ -2,14 +2,12 @@ package Pruning.Methods;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.index.DocsAndPositionsEnum;
+import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexReaderContext;
@@ -19,15 +17,16 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.SmallFloat;
 
-import Pruning.Quantiles.Init;
-import Pruning.Quantiles.Settings;
-import Pruning.Quantiles.Utils;
-import cern.colt.list.DoubleArrayList;
+import Pruning.Experiments.Settings;
+import Pruning.Experiments.Utils;
 import cern.colt.map.OpenIntDoubleHashMap;
 
 
@@ -39,7 +38,7 @@ public abstract class PruningMethod {
     CollectionStatistics collectionStats ;
     public Fields fields;
     IndexReaderContext irc;
-	
+	int MAC_DOC = Settings.maxdocs;
     
     public enum PruningType 
 	{
@@ -88,7 +87,7 @@ public abstract class PruningMethod {
 	int overallcounter = 0;
 	float avgdl ;
 	
-	TermsEnum termEnum ;
+	
 	Terms allterms ;
 	long sumTotalTermFreq;
 	static byte[] norms = null ;
@@ -102,8 +101,8 @@ public abstract class PruningMethod {
 		ir =  IndexReader.open(dir2);
 	    searcher = new IndexSearcher(ir);// false read only
 	    irc = ir.getContext();
-	    
-	    
+	    searcher.setSimilarity(new BM25Similarity());
+	    System.out.println("MAXDOC " + ir.maxDoc());
 		this.isForQuantiles = isforquantiles;
 		collectionStats = searcher.collectionStatistics(Settings.content);
 		avgdl = Utils.avgFieldLength(collectionStats);
@@ -112,7 +111,6 @@ public abstract class PruningMethod {
 		
 		try {
 			allterms = fields.terms(Settings.content);
-			termEnum = allterms.iterator(null);
 			sumTotalTermFreq = allterms.getSumTotalTermFreq();//collection lenght |C|
 			
 		} catch (IOException e) {
@@ -132,23 +130,37 @@ public abstract class PruningMethod {
 		}
 	}
 	
+	public IndexSearcher GetSearcher()
+	{
+		return searcher;
+		
+	}
 	
 	public Map<Term,OpenIntDoubleHashMap> GetPostingsForTerm(Term tempterm) throws IOException
 	{
-		//TermsEnum termEnum2  = allterms.iterator(null);
 
 		Map<Term,OpenIntDoubleHashMap> result = new HashMap<Term, OpenIntDoubleHashMap>();
 		OpenIntDoubleHashMap temp;
-		DocsAndPositionsEnum docsAndPositionsEnum  = MultiFields.getTermPositionsEnum(ir,MultiFields.getLiveDocs(ir), Settings.content, tempterm.bytes());
-
-	//	System.out.println(tempterm.text());
 		
-	 	//termEnum2.seekExact(tempterm.bytes(), true);
-	 	//overallcounter += termEnum2.docFreq();
+		TermsEnum termEnum = allterms.iterator(null);
+		
+		termEnum.seekExact(tempterm.bytes(), true);
+		DocsEnum docsenum = termEnum.docs(MultiFields.getLiveDocs(ir), null);
+		    
+		//DocsAndPositionsEnum docsAndPositionsEnum  = MultiFields.getTermPositionsEnum(ir,MultiFields.getLiveDocs(ir), Settings.content, tempterm.bytes());
 
-	 	if(docsAndPositionsEnum!=null)
+		
+	 	if(docsenum!=null)
 	 	{
-	 		temp = GetPostingsScores(docsAndPositionsEnum,tempterm);
+	 		if(Settings.collectiontype != 2)
+	 			temp = GetPostingsScores(docsenum,tempterm);
+	 		else // PWA collection is too big to keep all postings for all term that's why I keep first max doc given in config as I do benchmarking for top 1000 
+	 		{
+	 			
+	 			TermQuery q = new TermQuery(tempterm);
+	 			TopDocs topdocs = searcher.search(q, MAC_DOC);
+	 			temp = GetPostingsScores(tempterm.text(), docsenum, topdocs.scoreDocs);
+	 		}
 	 		if(temp!=null)
 	 		{
 		 			result.put(tempterm,temp);
@@ -164,8 +176,8 @@ public abstract class PruningMethod {
 	
 	
 
-	abstract OpenIntDoubleHashMap GetPostingsScores(DocsAndPositionsEnum docsAndPositionsEnum, Term tempterm) throws IOException;
-	
+	abstract OpenIntDoubleHashMap GetPostingsScores(DocsEnum docsEnum, Term tempterm) throws IOException;
+	abstract OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsEnum, ScoreDoc[] docs) throws IOException;	
 	
 	
 }

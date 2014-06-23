@@ -7,15 +7,18 @@ import java.util.Map;
 
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DocsAndPositionsEnum;
+import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.FieldCache;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermStatistics;
 import org.apache.lucene.search.FieldCache.DocTerms;
 import org.apache.lucene.search.similarities.SimilarityBase;
 import org.apache.lucene.util.BytesRef;
 
+import Pruning.Experiments.Settings;
 import cern.colt.function.IntDoubleProcedure;
 import cern.colt.list.DoubleArrayList;
 import cern.colt.list.IntArrayList;
@@ -54,7 +57,8 @@ public class DiversificationBased  extends PruningMethod{
 		this.collectiontype = collectiontype;
 		this.dateinit = dateinit;
 		this.datecount = dc;
-		
+		windowssize =Settings.windowsize;
+		sizeslide = Settings.slidingsize;
 		Initialize();
 		
 		
@@ -98,8 +102,9 @@ public class DiversificationBased  extends PruningMethod{
 	}
 
 	@Override
-	OpenIntDoubleHashMap GetPostingsScores(DocsAndPositionsEnum docsAndPositionsEnum, Term tempterm) throws IOException
+	OpenIntDoubleHashMap GetPostingsScores(DocsEnum docsAndPositionsEnum, Term tempterm) throws IOException
 	{
+		
 		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		String date;
 		int docid;
@@ -152,6 +157,64 @@ public class DiversificationBased  extends PruningMethod{
 		
 		return scoring.DistanceMethod(type, tempterm.text(), map, maxscore);
 	}
+	
+	@Override
+	OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException
+	{
+		
+		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
+		String date;
+		int docid;
+		BytesRef test = new BytesRef();
+		float doclen;
+		int freq;
+		float docscore;
+		
+		if(this.type == PruningType.DYNAMIC.getPruningTypeValue())
+		{
+			aspects = new TemporalAspects(type, term, alpha, datecount, sizeslide, windowssize);
+		}
+		
+		IntArrayList keys = new IntArrayList();
+		DoubleArrayList values = new DoubleArrayList();
+		double maxscore = 0;
+
+		scoring = new DiversificationBased_Scoring(aspects.rangeSet, collectiontype);
+		for(int i=0;i<scoredocs.length;i++)
+		{
+				docid = scoredocs[i].doc;
+				docscore = scoredocs[i].score;
+				if(collectiontype == 1)
+				{
+						date = dates.getTerm((int)docid, test).utf8ToString();
+			
+						if(date.equals("")) // I do not know why but sometimes it returns ""
+							date = ir.document(docid).get(temporalfield);
+				}
+				else
+						date = ir.document(docid).get(temporalfield);
+	
+
+				scoring.GetDocumentsWindowsGuava(docid, date, docscore, alpha, dateinit,datecount); // to map docid to windows
+	
+					if(maxscore < docscore)
+						maxscore = docscore;
+					
+				
+					map.put(docid, docscore);
+				
+				
+		}	
+
+		
+		return scoring.DistanceMethod(type, term, map, maxscore);
+	}
+
+
+
+
+
+
 
 	
 

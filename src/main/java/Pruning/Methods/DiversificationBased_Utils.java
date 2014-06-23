@@ -110,7 +110,7 @@ public class  DiversificationBased_Utils {
 	{
 
 		try{
-			int result = (int) (((Long.parseLong(date) / 1000L) - dateinit)/(86400L ));
+			int result = (int) (((Long.parseLong(date) ) - dateinit)/(86400000L ));
 			if(result >  datecount )//516200
 				result = datecount;
 			if(result <0 ) 
