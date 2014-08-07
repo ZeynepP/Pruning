@@ -6,20 +6,18 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.FieldCache;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.FieldCache.DocTerms;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermStatistics;
-import org.apache.lucene.search.FieldCache.DocTerms;
-import org.apache.lucene.search.similarities.SimilarityBase;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
 
-import Pruning.Experiments.Settings;
-import cern.colt.function.IntDoubleProcedure;
 import cern.colt.list.DoubleArrayList;
 import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
@@ -47,9 +45,10 @@ public class DiversificationBased  extends PruningMethod{
 	int windowssize;
 	DiversificationBased_Scoring scoring;
 	
-	public DiversificationBased(boolean isforquantiles, String indexdir,String gmm, String maxmin, String rangefield,int type, int collectiontype, long dateinit, int dc) throws IOException
+	public DiversificationBased(boolean isforquantiles, String indexdir,String gmm, String maxmin, String rangefield,int type, int collectiontype, long dateinit, int dc, int wsize, int slidesize, String content, int maxdoc) throws IOException
 	{
-		super(isforquantiles,indexdir);
+
+		super(isforquantiles,indexdir,content,maxdoc,collectiontype);
 		maxminfile = maxmin;
 		GmmFile = gmm;
 		this.temporalfield = rangefield;
@@ -57,8 +56,8 @@ public class DiversificationBased  extends PruningMethod{
 		this.collectiontype = collectiontype;
 		this.dateinit = dateinit;
 		this.datecount = dc;
-		windowssize =Settings.windowsize;
-		sizeslide = Settings.slidingsize;
+		windowssize =wsize;
+		sizeslide = slidesize;
 		Initialize();
 		
 		
@@ -73,7 +72,7 @@ public class DiversificationBased  extends PruningMethod{
 			}
 		}
 		
-		if(this.type != PruningType.DYNAMIC.getPruningTypeValue() && this.collectiontype!=1) // no wiki no need optimal windows size etc.
+		if(this.type != PruningType.DYNAMIC.getPruningTypeValue() )//&& this.collectiontype!=1) // no wiki no need optimal windows size etc.
 		{
 			aspects = new TemporalAspects(type, null, alpha, datecount, sizeslide, windowssize);
 			
@@ -127,6 +126,8 @@ public class DiversificationBased  extends PruningMethod{
 		double maxscore = 0;
 
 		scoring = new DiversificationBased_Scoring(aspects.rangeSet, collectiontype);
+		//TopDocs d= searcher.search(new TermQuery(tempterm), null, 1000);
+		//System.out.println(tempterm.text() + " == " + d.scoreDocs.length);
 		while ((docid = docsAndPositionsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
 
 				if(collectiontype == 1)
@@ -162,6 +163,7 @@ public class DiversificationBased  extends PruningMethod{
 	OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException
 	{
 		
+		
 		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		String date;
 		int docid;
@@ -174,9 +176,7 @@ public class DiversificationBased  extends PruningMethod{
 		{
 			aspects = new TemporalAspects(type, term, alpha, datecount, sizeslide, windowssize);
 		}
-		
-		IntArrayList keys = new IntArrayList();
-		DoubleArrayList values = new DoubleArrayList();
+
 		double maxscore = 0;
 
 		scoring = new DiversificationBased_Scoring(aspects.rangeSet, collectiontype);

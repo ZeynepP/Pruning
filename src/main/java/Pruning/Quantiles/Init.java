@@ -6,20 +6,25 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 import java.util.zip.DataFormatException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 
 import Pruning.Methods.PruningMethod;
 import cern.colt.list.DoubleArrayList;
@@ -65,7 +70,35 @@ public class Init {
 		filename = Utils.SetPruneTypeandFilename(type,ts,true); // will set also prune type 
 		metrics.clear();
 	}
-	
+	public void readfromfile() throws IOException
+	{
+		File folder = new File(Settings.termsfolder);
+		File[] listOfFiles = folder.listFiles();
+
+		for (File file : listOfFiles) {
+		    if (file.isFile()) {
+		        System.out.println(file.getName());
+		        List<String> lines =  FileUtils.readLines(file);
+		        String[] values;
+		        if(lines.get(0)!=null)
+				{
+		        	values = lines.get(0).split(",");
+					if(values.length>0 )
+					{
+						for(int i=0;i<values.length;i++)
+						{
+							metrics.insert(Double.valueOf(values[i]));
+							
+						}
+					}
+					
+				}
+		        
+		        
+		    }
+		}
+		GetThreshold(true);
+	}
 	 
 	 public void run() throws IOException, InterruptedException, ExecutionException
 	 {
@@ -123,62 +156,68 @@ public class Init {
 	
 	public void GetVocabulary() throws CorruptIndexException, IOException, DataFormatException, ParseException
 	{
-		
-		// Reading from file
-		List voc =  FileUtils.readLines(new File("/home/pehlivanz/vocabularyPWA.csv"));
-		String[] t = ((String)voc.get(0)).split(",");
-		
-		Collections.addAll(terms, ((String)voc.get(0)).split(","));
-		Collections.shuffle(terms);
-		terms = terms.subList(0, 1500000);
-		
-	/*	String[] temp ;
-	 * Set<String> tempterms = new HashSet<String>(100000000);
+		if(Settings.collectiontype == 2)
+		{
+			// Reading from file
+			List voc =  FileUtils.readLines(new File("/home/pehlivanz/vocabularyPWA.csv"));
+			String[] t = ((String)voc.get(0)).split(",");
+			
+			Collections.addAll(terms, ((String)voc.get(0)).split(","));
+			Collections.shuffle(terms);
+			terms = terms.subList(0, 1500000);
+		}
+		else
+		{
+			String[] temp ;
+			Set<String> tempterms = new HashSet<String>(100000000);
 	
-		List<String> termssampling = new ArrayList<String>();
-		Pattern p = Pattern.compile("-?\\d+");
-		Pattern p2 =  Pattern.compile("[^\\p{L}\\p{Nd}]");
-		String term;
-		TermsEnum termEnum ;
-		Terms allterms ;
-			
-		allterms = pruningmethod.fields.terms(Settings.content);
-		termEnum = allterms.iterator(null);
+			List<String> termssampling = new ArrayList<String>();
+			Pattern p = Pattern.compile("-?\\d+");
+			Pattern p2 =  Pattern.compile("[^\\p{L}\\p{Nd}]");
+			String term;
+			TermsEnum termEnum ;
+			Terms allterms ;
 				
-		
-		while (termEnum.next()!=null)
-		{ 
-			//if(!termEnum.term().utf8ToString().contains("_") &&!termEnum.term().utf8ToString().contains("?") &&!termEnum.term().utf8ToString().contains(":")&&!termEnum.term().utf8ToString().contains("."))
+			allterms = pruningmethod.fields.terms(Settings.content);
+			System.out.println(allterms.size());
+			termEnum = allterms.iterator(null);
+					
 			
-			//if(!termEnum.term().utf8ToString().matches("[^A-Za-z]"));//matches(".*(\\.|\\_|\\?|:|;|!|\\').*"))
-			term = termEnum.term().utf8ToString().trim().intern();
-			if(!p.matcher(term).find()&& !p2.matcher(term).find() && term.length()>2 &&term.length()<10&& !term.matches(".*(\\.|\\_|\\?|:|;|!|\\').*"))
-			{
+			while (termEnum.next()!=null)
+			{ 
+				//if(!termEnum.term().utf8ToString().contains("_") &&!termEnum.term().utf8ToString().contains("?") &&!termEnum.term().utf8ToString().contains(":")&&!termEnum.term().utf8ToString().contains("."))
 				
-				tempterms.add(term);
-				if(tempterms.size()>1000000)
+				//if(!termEnum.term().utf8ToString().matches("[^A-Za-z]"));//matches(".*(\\.|\\_|\\?|:|;|!|\\').*"))
+				term = termEnum.term().utf8ToString().trim().intern();
+				if(!p.matcher(term).find()&& !p2.matcher(term).find() && term.length()>2 &&term.length()<10&& !term.matches(".*(\\.|\\_|\\?|:|;|!|\\').*"))
 				{
-					termssampling.addAll(tempterms);
-					Collections.shuffle(termssampling);
-					terms.addAll(termssampling.subList(0, 50000));
-					termssampling.clear();
-					tempterms.clear();
-					System.out.println("Number of total terms : " + terms.size());
+					
+					tempterms.add(term);
+					if(tempterms.size()>1000000) break;
+				/*	{
+						termssampling.addAll(tempterms);
+						Collections.shuffle(termssampling);
+						terms.addAll(termssampling.subList(0, 50000));
+						termssampling.clear();
+						tempterms.clear();
+						System.out.println("Number of total terms : " + terms.size());
+						
+					}*/
+					
 					
 				}
 				
-				
 			}
 			
+			termssampling.addAll(tempterms);
+			Collections.shuffle(termssampling);
+			terms.addAll(termssampling.subList(0, 150000));
+			//terms.addAll(tempterms);// because the other one is set no duplicates
+			//Collections.sort(terms);
+			//Collections.shuffle(terms);
+			//terms = terms.subList(0, 2000000);
+		
 		}
-			
-	   FileUtils.writeStringToFile(new File("/home/pehlivanz/vocabularyPWA.csv"),	Arrays.toString(terms.toArray()));	
-		/*	
-		terms.addAll(tempterms);// because the other one is set no duplicates
-		Collections.shuffle(terms);
-		terms = terms.subList(0, 2000000);*/
-		
-		
 		System.out.println("Number of total terms : " + terms.size());
 	}
 	

@@ -1,6 +1,7 @@
 package Pruning.Methods;
 
 
+import Pruning.Experiments.Settings;
 import Pruning.Methods.PruningMethod.PruningType;
 import cern.jet.random.Normal;
 
@@ -69,7 +70,7 @@ public class TemporalAspects {
 	     catch(Exception ex)
 	     {
 	    	 System.out.println(term + " winsize wiki not in list");
-	    	 windowsize = (max - min);
+	    	 windowsize = windowssize;
 	 
 	     }
 
@@ -129,10 +130,18 @@ public class TemporalAspects {
 	{
 		String[] temp = null;
 		String result ="";
-		int n = 5; // start, end, weight, mean ,sd
+		int n = 0;
+		int index = 0;
+		if(Settings.collectiontype == 0) // LATIMES 
+		{
+			n = 3;// start, end, weight,
+			index = 2;
+		}
+		else
+			n = 5	; // start, end, weight, mean ,sd
 		try{
 	
-			
+			 	
 			 	result =  DiversificationBased.GMMresults.get(term);
 				result = result.replaceAll("\'", "");
 			 	temp = result.split(",");
@@ -142,18 +151,18 @@ public class TemporalAspects {
 					 int start = 0;
 				     int end =0;
 				     double weight;
-				     int index = 2;
+				    
 			
 				     
-					for(int i=0;i<temp.length;i=i+n)
+					for(int i=index;i<temp.length;i=i+n)
 					{
 							start = (int) Double.parseDouble(temp[i+0].trim());
 							end = (int) Double.parseDouble(temp[i+1].trim());
 							weight = Double.parseDouble(temp[i+2].trim());
 		
-							rangeSet.put( Range.closed(start , end), Double.parseDouble(temp[i+4].trim()));
+							rangeSet.put( Range.closed(start , end), weight);//Double.parseDouble(temp[i+4].trim()));
 							
-							index++;
+							//index++;
 					}
 				}
 		}

@@ -1,6 +1,7 @@
 package Pruning.Experiments;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -34,10 +35,13 @@ public class Experiments {
 	float[] prunelist;
 	String filename;
 	static Map<String, Double> pruneratiobyterm = new HashMap<String, Double> ();
+	int type;
 	public Experiments(int type) throws IOException, DataFormatException, ParseException
 	{
+		this.type = type;
 		filename = Utils.SetPruneTypeandFilename(type,Settings.noPruningIndex,false); 
 		GetVocabulary();
+		
 	}
 	
 	
@@ -64,7 +68,7 @@ public class Experiments {
 			ExecutorService executor =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 			String term;
 			
-			for(int i=0;i<terms.size();i++)
+			for(int i= 0;i<terms.size();i++)
 			{ 
 				term = terms.get(i);
 			//	System.out.println(term);
@@ -113,21 +117,24 @@ public class Experiments {
 	    		{
 
 	    			pruneratio = prune.PruningTemporal(indexten, Settings.percent==1, Settings.prunetype == -2);
-	    			pruneratio = 1- indexten;
+	    			pruneratio = pruneden;
 	
 	    		}
 	    		else 
 	    		{
     				pruneratio = prune.PruningByRatio(indexten);
 					pruneratio = 1- pruneden;
+					
+						
 
 	    		}
 	    		
 	  
-				System.out.print(" Ratio Pruning " + pruneratio);
+				//System.out.println(" Ratio Pruning " + pruneratio);
 						
-				
-				ev.run(prune);
+				if(Settings.collectiontype == 1) // WIKI date validity is range
+					ev.runRangeField(prune, pruneratio);
+				else ev.runDateField(prune,pruneratio);
 
 			   }
 				
@@ -163,7 +170,16 @@ public class Experiments {
 			for(int k=0; k< temp.length;k++)
 			{
 				if(!temp[k].trim().isEmpty())
-					tempterms.add(temp[k].trim().toLowerCase());
+				{
+					//File f = new File(Settings.termsfolder + type + "_"+ temp[k].toLowerCase() + ".txt");
+					
+					//if(!f.exists())
+					{
+						//System.out.println( temp[k].toLowerCase());
+						tempterms.add(temp[k].trim().toLowerCase());
+					}
+					
+				}
 				
 				
 			}
@@ -171,7 +187,7 @@ public class Experiments {
 			
 		terms.addAll(tempterms); // to keep inscoring overall our terms 
 		Collections.sort(terms, Collections.reverseOrder());// i NEED TO SORT because I use start end to work on multiple clusters
-		System.out.println("Number of total terms : " + terms.size());
+		//System.out.println("Number of total terms : " + terms.size());
 	}
 
 	

@@ -22,9 +22,9 @@ import cern.colt.map.OpenIntDoubleHashMap;
 public class TCP  extends PruningMethod {
 
 	int topk = 10;
-	public TCP(boolean isforquantiles, String indexdir, int topk) throws IOException {
+	public TCP(boolean isforquantiles, String indexdir, int topk, String content, int maxdoc, int type) throws IOException {
 		
-		super(isforquantiles,indexdir);
+		super(isforquantiles,indexdir,content,maxdoc,type);
 		this.topk=topk;
 		searcher.setSimilarity(new BM25Similarity());
 		

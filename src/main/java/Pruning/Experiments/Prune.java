@@ -74,13 +74,27 @@ public class Prune {
 						}
 						else
 						{
-							if(vals.get(i)  < index)
+							if(Settings.prunetype < 3)
 							{
-						
-								ltr.set((long) keys.get(i), true );
-								removedcounter++;
+								if(vals.get(i)  < index)
+								{
+							
+									ltr.set((long) keys.get(i), true );
+									removedcounter++;
+								}
+								else break;
 							}
-							else break;
+							else
+							{
+								if(vals.get(i) >= index)
+								{
+							
+									ltr.set((long) keys.get(i), true );
+									removedcounter++;
+								}
+								
+								
+							}
 							
 						}
 						
@@ -109,7 +123,7 @@ public class Prune {
 			
 		LongArrayBitVector ltr ;
 
-		System.out.println(index);
+		//System.out.println(index);
 		Experiments.overallcounter = 0;
 	    int topk = 0;
 	    int removedcounter = 0;
@@ -126,7 +140,7 @@ public class Prune {
 	    {
 			
 			tempterm =  new Term( Settings.content,term);
-			termfile = new File( Settings.termsfolder + ptype + "_"+ term + ".txt" );
+			termfile = new File( Settings.termsfolder + ptype + "_"+ term.toLowerCase() + ".txt" );
 			
 				
 			
@@ -139,7 +153,7 @@ public class Prune {
 					ltr=  LongArrayBitVector.getInstance().length(Experiments.pruningmethod.ir.maxDoc());
 					ltr.fill(false);
 					
-					String[] ids = s.split(",");
+					String[] ids = s.replace("[", "").replace("]", "").split(",");
 
 			
 					Experiments.overallcounter=ids.length;
@@ -159,22 +173,22 @@ public class Prune {
 					 	}
 					 	
 					 
-					 	// for(int i=0; i< ids.length;i++)
-					    for(int i=topk; i< ids.length;i++)
+					 	 for(int i=1; i< ids.length;i++)//0 i emty
+					    //for(int i=topk; i< ids.length;i++)
 						{
 						 
-					    	//	 docscore = ids[i].split("_");
+					    	 String[] docscore = ids[i].split("->");
 				
-					    	//	if( Float.valueOf( docscore[1] ) < index )
+					    	if( Float.valueOf( docscore[1].trim() ) >= index )
 						 	{
 						    	try{
-									ltr.set( Long.valueOf( ids[i]).longValue(), true );
-						    		//ltr.set( Long.valueOf(docscore[0]).longValue(), true );
+									//ltr.set( Long.valueOf( ids[i]).longValue(), true );
+						    		ltr.set( Long.valueOf(docscore[0].trim()).longValue(), true );
 									removedcounter++;
 						    	}
 						    	catch(Exception ex){
 						    		
-						    		//System.out.println( termfile);
+						    		System.out.println( termfile);
 						    	}
 						 	}
 							

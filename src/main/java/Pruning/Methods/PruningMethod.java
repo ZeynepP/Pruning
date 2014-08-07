@@ -25,7 +25,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.SmallFloat;
 
-import Pruning.Experiments.Settings;
 import Pruning.Experiments.Utils;
 import cern.colt.map.OpenIntDoubleHashMap;
 
@@ -38,7 +37,9 @@ public abstract class PruningMethod {
     CollectionStatistics collectionStats ;
     public Fields fields;
     IndexReaderContext irc;
-	int MAC_DOC = Settings.maxdocs;
+	int MAC_DOC;
+	int collectiontype;
+	String content;
     
     public enum PruningType 
 	{
@@ -95,22 +96,25 @@ public abstract class PruningMethod {
 
 	
 
-	public PruningMethod(boolean isforquantiles, String indexfile) throws IOException 
+	public PruningMethod(boolean isforquantiles, String indexfile, String body, int maxdoc, int collectiont) throws IOException 
 	{
 		dir2 = FSDirectory.open(new File(indexfile));
 		ir =  IndexReader.open(dir2);
 	    searcher = new IndexSearcher(ir);// false read only
 	    irc = ir.getContext();
 	    searcher.setSimilarity(new BM25Similarity());
+	    MAC_DOC = maxdoc;
+	    content = body;
 	    System.out.println("MAXDOC " + ir.maxDoc());
+	    System.out.println(body);
 		this.isForQuantiles = isforquantiles;
-		collectionStats = searcher.collectionStatistics(Settings.content);
+		collectionStats = searcher.collectionStatistics(body);
 		avgdl = Utils.avgFieldLength(collectionStats);
 		fields = MultiFields.getFields(ir);
-		
+		collectiontype = collectiont;
 		
 		try {
-			allterms = fields.terms(Settings.content);
+			allterms = fields.terms(content);
 			sumTotalTermFreq = allterms.getSumTotalTermFreq();//collection lenght |C|
 			
 		} catch (IOException e) {
@@ -121,7 +125,7 @@ public abstract class PruningMethod {
 		for (AtomicReaderContext ctx : irc.leaves())
 		{
 			try {
-				norms = ArrayUtils.addAll(norms,(byte[])ctx.reader().normValues(Settings.content).getSource().getArray());
+				norms = ArrayUtils.addAll(norms,(byte[])ctx.reader().normValues(content).getSource().getArray());
 				
 			} catch (IOException e) {
 
@@ -152,13 +156,14 @@ public abstract class PruningMethod {
 		
 	 	if(docsenum!=null)
 	 	{
-	 		if(Settings.collectiontype != 2)
+	 		if(collectiontype != 2)
 	 			temp = GetPostingsScores(docsenum,tempterm);
 	 		else // PWA collection is too big to keep all postings for all term that's why I keep first max doc given in config as I do benchmarking for top 1000 
 	 		{
 	 			
 	 			TermQuery q = new TermQuery(tempterm);
 	 			TopDocs topdocs = searcher.search(q, MAC_DOC);
+	 			//System.out.println(" total docs " + tempterm.text() + "  " + topdocs.scoreDocs.length);
 	 			temp = GetPostingsScores(tempterm.text(), docsenum, topdocs.scoreDocs);
 	 		}
 	 		if(temp!=null)

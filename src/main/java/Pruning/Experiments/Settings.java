@@ -43,7 +43,7 @@ public class Settings {
 	public static String noPruningIndex ;
 	public static String qrelsPathtemporaltrue;
 	public static String GMMfile;
-	public static String subBasic;
+	public static String maxminfile;
 	public static int collectiontype;
 	public static int querynumber;
 	public static double alpha;
@@ -64,7 +64,6 @@ public class Settings {
 		datecount = Integer.parseInt(configFile.getProperty("datecount"));
 		docNameField = configFile.getProperty("docNameField");
 		content = configFile.getProperty("content");
-		content = configFile.getProperty("content");
 		datefield = configFile.getProperty("datefield");
 		dateinit = Long.parseLong( configFile.getProperty("dateinit"));
 		rangefield = configFile.getProperty("rangefield");
@@ -79,7 +78,8 @@ public class Settings {
 		slidingsize = Integer.parseInt(configFile.getProperty("slidingsize")); 
 		topicPathtemporal = configFile.getProperty("topicPathtemporal");
 		maxdocs =  Integer.parseInt(configFile.getProperty("maxdocs")); 
-		
+		GMMfile = configFile.getProperty("GMMfile");
+		maxminfile = configFile.getProperty("maxminfile");
 		if(collectiontype == 0)
 		{
 			STANDARD_QUERIES = new String[STANDARD_QUERIES_LA.length];

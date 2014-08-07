@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 
 import Pruning.Experiments.Settings;
 import cern.colt.function.IntDoubleProcedure;
+import cern.colt.list.DoubleArrayList;
 import cern.colt.list.IntArrayList;
 import cern.colt.map.OpenIntDoubleHashMap;
 
@@ -21,7 +22,7 @@ public class DiversificationBased_Scoring{
 
 	RangeMap aspects;
 	int collectiontype;
-	OpenIntDoubleHashMap mapsdocidw = new OpenIntDoubleHashMap();
+	OpenIntDoubleHashMap mapsdocidw = new OpenIntDoubleHashMap(10000000);
 /*********************************************** get windows for each document ******************/
 	
 	public DiversificationBased_Scoring(RangeMap las, int collectiontype)
@@ -51,7 +52,7 @@ public class DiversificationBased_Scoring{
 						end =  DiversificationBased_Utils.GetIndexDate(dates[1],dateinit,datecount);
 					else end = start;
 					if(end<start) end = start+1;
-					
+					//System.out.println(start + " +++ " + end);
 					tempmap =aspects.subRangeMap(Range.closed(start,end));
 				
 
@@ -65,7 +66,15 @@ public class DiversificationBased_Scoring{
 				score+=0.000000001;// joker window
 			
 			score+=alpha;
-			mapsdocidw.put(docid, score);
+			
+			try{
+				mapsdocidw.put(docid, score);
+				//System.out.println(docid + " == " + score);
+			}
+			catch(Exception ex)
+			{
+				System.out.println(docid + " " + ex.toString());
+			}
 			
 
 			
@@ -93,23 +102,28 @@ public class DiversificationBased_Scoring{
 			@Override
 			public boolean apply(int arg0, double arg1 ) {
 				// TODO Auto-generated method stub
-				double x = mapsdocidw.get(arg0);
-				double score = x * (arg1/maxscore);
-				//map.put(arg0, score); 
-				double dist =  calculateDistance(1, 1, x , (arg1/maxscore));
-			    mapdistance.put(arg0, dist );
+				if(mapsdocidw!=null)
+				{
+					double x = mapsdocidw.get(arg0);
+				//	double score = x * (arg1/maxscore);
+					//map.put(arg0, score); 
+					double dist =  calculateDistance(1, 1, x , (arg1/maxscore));
+				    mapdistance.put(arg0, dist );
+				}
 			    return true;
 			}
 		};
 		mapdocscore.forEachPair( p);
 		
-		IntArrayList keys = new IntArrayList();
-		String result = "";
-		mapdistance.keysSortedByValue(keys);
+		IntArrayList keys = mapdistance.keys();
+		//String result = "";
+		DoubleArrayList values= mapdistance.values();
+		//mapdistance.keysSortedByValue(keys);
 		
-		
-		for(int i =0;i<keys.size();i++)
-			result = result + "," + keys.get(i);
+		String result ="";
+		for(int i =0;i<values.size();i++)
+			result = result + "," + keys.get(i) + "->" + values.get(i);
+		//System.out.println( mapdocscore.toString());
 		FileUtils.writeStringToFile(new File(Settings.termsfolder + type + "_"+ term + ".txt"), result);
 		return mapdistance;
 		

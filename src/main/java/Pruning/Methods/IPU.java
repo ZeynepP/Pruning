@@ -21,8 +21,9 @@ import cern.colt.map.OpenIntDoubleHashMap;
 
 public class IPU extends PruningMethod {
 
-	public IPU(boolean isForQuantiles, String indexdir) throws IOException {
-		super(isForQuantiles,indexdir);
+	public IPU(boolean isforquantiles, String indexdir, String content, int maxdoc, int type) throws IOException {
+		
+		super(isforquantiles,indexdir,content,maxdoc,type);
 		searcher.setSimilarity(new LMJelinekMercerSimilarity(0.6f));
 
 	}

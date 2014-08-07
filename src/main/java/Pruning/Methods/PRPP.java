@@ -21,9 +21,10 @@ public class PRPP extends PruningMethod {
 	double mean;
 	double sd;
 
-	public PRPP(boolean isforquantiles,String indexdir) throws IOException {
+	public PRPP(boolean isforquantiles,String indexdir, String content, int maxdoc, int type) throws IOException {
 		
-		super(isforquantiles,indexdir);
+		super(isforquantiles,indexdir,content,maxdoc,type);
+	
 
 		mean = mean(); 
 		sd = standardDeviation();

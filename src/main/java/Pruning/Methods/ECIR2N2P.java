@@ -18,17 +18,11 @@ import cern.colt.map.OpenIntDoubleHashMap;
 
 public class ECIR2N2P extends PruningMethod {
 	
-	float  sumTotalTermFreq;
 
-	public ECIR2N2P(boolean isForQuantiles, String indexdir) throws IOException {
+	public ECIR2N2P(boolean isForQuantiles, String indexdir, String content, int maxdoc, int type) throws IOException {
 		
-		super(isForQuantiles,indexdir);
-		try {
-			sumTotalTermFreq = allterms.getSumTotalTermFreq();//collection lenght |C|
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		super(isForQuantiles,indexdir,content,maxdoc,type);
+		
 		
 	}
 
@@ -41,6 +35,7 @@ public class ECIR2N2P extends PruningMethod {
 		IntArrayList keys = new IntArrayList();
 		DoubleArrayList values = new DoubleArrayList();
 		TermsEnum termEnum = allterms.iterator(null);
+		termEnum.seekExact(tempterm.bytes(), true);
 		float  sumDocFreq = termEnum.totalTermFreq();
 
 			 	
