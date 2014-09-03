@@ -72,7 +72,11 @@ public class APCorrelation {
 	{
 		int n = truth.length;
 		if(n!=estimate.length)
-			 throw new DimensionMismatchException(truth.length, estimate.length);
+		{
+			System.out.println("not equal ap");
+			throw new DimensionMismatchException(truth.length, estimate.length);
+		}
+			 
 		//n = 4;
 		// truth = new double[]{1,2,3,4};
 		// estimate = new double[]{4,3,2,1};
@@ -81,15 +85,26 @@ public class APCorrelation {
 		double CurrentDocID;
 		for(int i=1;i<n;i++)
 		{
-			CurrentDocID =  estimate[i];// this ID also gives the truth index as we did it before
-			double[] estimaterankedHigherIDs = Arrays.copyOfRange(estimate, 0,i);//i - 1 + 1 for java
-			double[] truthrankedHigherIDs = new double[n];
-			//int indextruthreverse = Arrays.asList(ArrayUtils.toObject(truth)).indexOf(CurrentDocID);
-			if(CurrentDocID!=1) //top ranked doc, beware
-				truthrankedHigherIDs = Arrays.copyOfRange(truth, 0, (int) CurrentDocID -1); // indextruhreservse - 1 but +1 for java
+
+			try{
 			
-			int Ci = CollectionUtils.intersection( Arrays.asList( ArrayUtils.toObject(truthrankedHigherIDs)),Arrays.asList( ArrayUtils.toObject(estimaterankedHigherIDs))).size();
-			innerSum += (Ci / (double)(i));//i - 1 + 1 for java
+				CurrentDocID =  estimate[i];// this ID also gives the truth index as we did it before
+				double[] estimaterankedHigherIDs = Arrays.copyOfRange(estimate, 0,i);//i - 1 + 1 for java
+				double[] truthrankedHigherIDs = new double[(int) CurrentDocID];
+				//int indextruthreverse = Arrays.asList(ArrayUtils.toObject(truth)).indexOf(CurrentDocID);
+			
+				if(CurrentDocID!=1) //top ranked doc, beware
+					truthrankedHigherIDs = Arrays.copyOfRange(truth, 0, (int) CurrentDocID -1); // indextruhreservse - 1 but +1 for java
+				
+				int Ci = CollectionUtils.intersection( Arrays.asList( ArrayUtils.toObject(truthrankedHigherIDs)),Arrays.asList( ArrayUtils.toObject(estimaterankedHigherIDs))).size();
+				innerSum += (Ci / (double)(i));//i - 1 + 1 for java
+			}
+			catch(Exception ex)
+			{
+				System.out.println(i);
+				System.out.println(ex.toString());
+				
+			}
 		}
 		
 		double result = (2 / (double)(n-1)) * innerSum - 1   ;

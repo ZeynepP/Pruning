@@ -19,10 +19,12 @@ public class MainQuantiles {
 	  // TO use same sampling for all types / same terms / I am doing all in once
 	    
 	    Settings.InstallSettings(config);
+	    Settings.termsfolder = args[3];
 	    System.out.println("STARTING");
 //	    Settings.termsfolder = args[6];
 	    Init init  = new Init(Settings.noPruningIndex, prunetype, args[1]);
-	    init.run();
+	    init.readfromfile();
+	    //init.run();
 //	    if(Integer.valueOf(args[5]) == 1)
 //	    	init.readfromfile();
 	    /*

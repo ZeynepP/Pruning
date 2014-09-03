@@ -60,7 +60,7 @@ public class Init {
 		this.type= type;
 		filename = Utils.SetPruneTypeandFilename(type,ts,true); // will set also prune type 
 		outputdir = output;
-		GetVocabulary();
+		GetVocabularyforqueryterms();
 	}
 
  // To run different approaches with the same sampling 
@@ -76,7 +76,7 @@ public class Init {
 		File[] listOfFiles = folder.listFiles();
 
 		for (File file : listOfFiles) {
-		    if (file.isFile()) {
+		    if (file.isFile() && file.getName().startsWith( String.valueOf( MainQuantiles.prunetype))) {
 		        System.out.println(file.getName());
 		        List<String> lines =  FileUtils.readLines(file);
 		        String[] values;
@@ -85,9 +85,10 @@ public class Init {
 		        	values = lines.get(0).split(",");
 					if(values.length>0 )
 					{
-						for(int i=0;i<values.length;i++)
+						for(int i=1;i<values.length;i++)
 						{
-							metrics.insert(Double.valueOf(values[i]));
+							String[] docscore = values[i].split("->");
+							metrics.insert(Double.valueOf(docscore[1]));
 							
 						}
 					}
@@ -153,18 +154,46 @@ public class Init {
 
 	}
 
-	
+	public void GetVocabularyforqueryterms()
+	{
+
+		Set<String> tempterms = new HashSet<String>();
+		String[] temp ;
+
+		for(int i=0; i< Settings.STANDARD_QUERIES.length;i++)
+		{
+			temp = Settings.STANDARD_QUERIES[i].split(" ");
+			for(int k=0; k< temp.length;k++)
+			{
+				if(!temp[k].trim().isEmpty())
+				{
+					//File f = new File(Settings.termsfolder + type + "_"+ temp[k].toLowerCase() + ".txt");
+					
+					//if(!f.exists())
+					{
+						//System.out.println( temp[k].toLowerCase());
+						tempterms.add(temp[k].trim().toLowerCase());
+					}
+					
+				}
+				
+				
+			}
+		}
+			
+		terms.addAll(tempterms); // to keep inscoring overall our terms 
+	}
 	public void GetVocabulary() throws CorruptIndexException, IOException, DataFormatException, ParseException
 	{
+		System.out.println(Settings.collectiontype);
 		if(Settings.collectiontype == 2)
 		{
 			// Reading from file
 			List voc =  FileUtils.readLines(new File("/home/pehlivanz/vocabularyPWA.csv"));
-			String[] t = ((String)voc.get(0)).split(",");
 			
 			Collections.addAll(terms, ((String)voc.get(0)).split(","));
 			Collections.shuffle(terms);
-			terms = terms.subList(0, 1500000);
+			//terms = terms.subList(0, Settings.quantilestermssize);
 		}
 		else
 		{
@@ -193,16 +222,16 @@ public class Init {
 				{
 					
 					tempterms.add(term);
-					if(tempterms.size()>1000000) break;
-				/*	{
+					if(tempterms.size()>500000) break;
+					{
 						termssampling.addAll(tempterms);
 						Collections.shuffle(termssampling);
-						terms.addAll(termssampling.subList(0, 50000));
+						terms.addAll(termssampling.subList(0, 10000));
 						termssampling.clear();
 						tempterms.clear();
 						System.out.println("Number of total terms : " + terms.size());
 						
-					}*/
+					}
 					
 					
 				}
@@ -211,7 +240,7 @@ public class Init {
 			
 			termssampling.addAll(tempterms);
 			Collections.shuffle(termssampling);
-			terms.addAll(termssampling.subList(0, 150000));
+		//	terms.addAll(termssampling.subList(0, Settings.quantilestermssize));
 			//terms.addAll(tempterms);// because the other one is set no duplicates
 			//Collections.sort(terms);
 			//Collections.shuffle(terms);

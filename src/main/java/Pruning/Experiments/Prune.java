@@ -67,10 +67,11 @@ public class Prune {
 							if(vals.get(i)  <= index)
 							{
 						
+								
 								ltr.set((long) keys.get(i), true );
 								removedcounter++;
 							}
-							else break;
+							//else break;
 						}
 						else
 						{
@@ -78,11 +79,11 @@ public class Prune {
 							{
 								if(vals.get(i)  < index)
 								{
-							
+								
 									ltr.set((long) keys.get(i), true );
 									removedcounter++;
 								}
-								else break;
+								//else break;
 							}
 							else
 							{
@@ -115,7 +116,7 @@ public class Prune {
 	
 
 	// To test top k + percent 
-	public float  PruningTemporal(double index, boolean percent, boolean isRandom) throws IOException
+	public float  PruningTemporalTopk(double index, boolean percent, boolean isRandom) throws IOException
 	{
 		Term tempterm;
 	
@@ -126,6 +127,100 @@ public class Prune {
 		//System.out.println(index);
 		Experiments.overallcounter = 0;
 	    int topk = 0;
+	    int removedcounter = 0;
+
+		File termfile;
+		File termscorefile;
+		String s ;
+		List<String> intList2;
+	    int ptype = Settings.prunetype;
+	    if(isRandom)
+	    	ptype = 3;
+		
+		for(String term: Experiments.terms)
+	    {
+			
+			tempterm =  new Term( Settings.content,term);
+			termfile = new File( Settings.termsfolder + ptype + "_0.250"+ term.toLowerCase() + ".txt" );
+			
+				
+			
+			if( termfile.exists())
+			{
+			
+					s = FileUtils.readFileToString(termfile);
+					
+					
+					ltr=  LongArrayBitVector.getInstance().length(Experiments.pruningmethod.ir.maxDoc());
+					ltr.fill(false);
+					
+					String[] ids = s.replace("[", "").replace("]", "").split(",");
+
+			
+					Experiments.overallcounter=ids.length;
+					
+					 	if(percent )
+							topk = (int) (ids.length * index);
+						else topk= Math.min( (int) index, ids.length) ;
+					 	//System.out.println(topk);
+					 	if(isRandom)
+					 	{	
+					 			intList2 = Arrays.asList(ids);
+					 		
+					 			Collections.shuffle(intList2);
+					 			
+					 			ids = (String[]) intList2.toArray();
+					 		
+					 	}
+					 	
+					 
+					 	// for(int i=1; i< ids.length;i++)//0 i emty
+					    for(int i=topk; i< ids.length;i++)
+						{
+						 	{
+						    	try{
+									ltr.set( Long.valueOf( ids[i]).longValue(), true );
+						    		
+									removedcounter++;
+						    	}
+						    	catch(Exception ex){
+						    		
+						    		System.out.println( termfile);
+						    	}
+						 	}
+							
+						
+					}
+					
+					
+			    }
+			else 
+			{
+				ltr=  LongArrayBitVector.getInstance().length(Experiments.pruningmethod.ir.maxDoc());
+				ltr.fill(true);
+			//	System.out.println("No file for " + ptype+ "_" +Main41.alpha + Settings.withTF+ tempterm.text() + ".txt");
+			}
+			
+			Experiments.pruneratiobyterm.put(term, (double) (1- index));
+			maps.put(tempterm.bytes(), ltr);
+	    }
+	//	System.out.println(index +   " removed " + removedcounter + " total " + (float)removedcounter/(float)Experiments.overallcounter);
+		return (float)removedcounter/(float)Experiments.overallcounter;
+		
+	}
+	
+	
+	
+	public float  PruningTemporal(double index, boolean percent, boolean isRandom) throws IOException
+	{
+		Term tempterm;
+	
+		maps.clear();
+			
+		LongArrayBitVector ltr ;
+
+		//System.out.println(index);
+		Experiments.overallcounter = 0;
 	    int removedcounter = 0;
 
 		File termfile;
@@ -158,10 +253,7 @@ public class Prune {
 			
 					Experiments.overallcounter=ids.length;
 					
-					 	if(percent )
-							topk = (int) (ids.length * index);
-						else topk= Math.min( (int) index, ids.length) ;
-					 
+				
 					 	if(isRandom)
 					 	{	
 					 			intList2 = Arrays.asList(ids);
@@ -182,7 +274,7 @@ public class Prune {
 					    	if( Float.valueOf( docscore[1].trim() ) >= index )
 						 	{
 						    	try{
-									//ltr.set( Long.valueOf( ids[i]).longValue(), true );
+		//							System.out.println(Long.valueOf(docscore[0].trim()).longValue());
 						    		ltr.set( Long.valueOf(docscore[0].trim()).longValue(), true );
 									removedcounter++;
 						    	}
@@ -204,7 +296,7 @@ public class Prune {
 			//	System.out.println("No file for " + ptype+ "_" +Main41.alpha + Settings.withTF+ tempterm.text() + ".txt");
 			}
 			
-			Experiments.pruneratiobyterm.put(term, (double) (1- index));
+			Experiments.pruneratiobyterm.put(term, (double)ltr.count()/(double)Experiments.overallcounter);
 			maps.put(tempterm.bytes(), ltr);
 	    }
 	//	System.out.println(index +   " removed " + removedcounter + " total " + (float)removedcounter/(float)Experiments.overallcounter);

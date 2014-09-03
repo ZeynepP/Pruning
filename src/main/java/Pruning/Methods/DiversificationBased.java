@@ -3,6 +3,7 @@ package Pruning.Methods;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.index.AtomicReaderContext;
@@ -44,11 +45,12 @@ public class DiversificationBased  extends PruningMethod{
 	int sizeslide;
 	int windowssize;
 	DiversificationBased_Scoring scoring;
-	
-	public DiversificationBased(boolean isforquantiles, String indexdir,String gmm, String maxmin, String rangefield,int type, int collectiontype, long dateinit, int dc, int wsize, int slidesize, String content, int maxdoc) throws IOException
+	Map<Integer,String> date_docid = new HashMap<Integer, String>();
+
+	public DiversificationBased(boolean isfortest,boolean isforquantiles, String indexdir,String gmm, String maxmin, String rangefield,int type, int collectiontype, long dateinit, int dc, int wsize, int slidesize, String content, int maxdoc) throws IOException
 	{
 
-		super(isforquantiles,indexdir,content,maxdoc,collectiontype);
+		super(isfortest,isforquantiles,indexdir,content,maxdoc,collectiontype);
 		maxminfile = maxmin;
 		GmmFile = gmm;
 		this.temporalfield = rangefield;
@@ -58,24 +60,29 @@ public class DiversificationBased  extends PruningMethod{
 		this.datecount = dc;
 		windowssize =wsize;
 		sizeslide = slidesize;
-		Initialize();
 		
-		
-		for (AtomicReaderContext ctx : irc.leaves())
+		if(!isfortest)
 		{
-			try {
-				dates = f.getTerms(ctx.reader(),rangefield );	
-			
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		
+			Initialize();
+		
+		
+			for (AtomicReaderContext ctx : irc.leaves())
+			{
+				try {
+					dates = f.getTerms(ctx.reader(),rangefield );	
+				
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-		}
-		
-		if(this.type != PruningType.DYNAMIC.getPruningTypeValue() )//&& this.collectiontype!=1) // no wiki no need optimal windows size etc.
-		{
-			aspects = new TemporalAspects(type, null, alpha, datecount, sizeslide, windowssize);
 			
+			if(this.type != PruningType.DYNAMIC.getPruningTypeValue() )//&& this.collectiontype!=1) // no wiki no need optimal windows size etc.
+			{
+				aspects = new TemporalAspects(type, null, alpha, datecount, sizeslide, windowssize);
+				
+			}
 		}
 	}
 	
@@ -130,6 +137,10 @@ public class DiversificationBased  extends PruningMethod{
 		//System.out.println(tempterm.text() + " == " + d.scoreDocs.length);
 		while ((docid = docsAndPositionsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
 
+			if(date_docid.containsKey(docid))
+				date = date_docid.get(docid);
+			else // TODO UPDATE JUST FOR PWA FOR WIKI MULTIMAP SHOULD BE USED
+			{
 				if(collectiontype == 1)
 				{
 						date = dates.getTerm((int)docid, test).utf8ToString();
@@ -139,7 +150,9 @@ public class DiversificationBased  extends PruningMethod{
 				}
 				else
 						date = ir.document(docid).get(temporalfield);
-
+				
+				date_docid.put(docid, date);
+			}
 				doclen =  NORM_TABLE[ norms[(int) docid] & 0xFF];
 		 	    freq =  docsAndPositionsEnum.freq();
 				docscore = RankingFunctions.BM25(avgdl, freq,  doclen, idf);
@@ -156,11 +169,11 @@ public class DiversificationBased  extends PruningMethod{
 		}	
 
 		
-		return scoring.DistanceMethod(type, tempterm.text(), map, maxscore);
+		return scoring.DistanceMethod(super.isForQuantiles, type, tempterm.text(), map, maxscore);
 	}
 	
 	@Override
-	OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException
+	OpenIntDoubleHashMap GetPostingsScores(Term term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException
 	{
 		
 		
@@ -174,7 +187,7 @@ public class DiversificationBased  extends PruningMethod{
 		
 		if(this.type == PruningType.DYNAMIC.getPruningTypeValue())
 		{
-			aspects = new TemporalAspects(type, term, alpha, datecount, sizeslide, windowssize);
+			aspects = new TemporalAspects(type, term.text(), alpha, datecount, sizeslide, windowssize);
 		}
 
 		double maxscore = 0;
@@ -207,7 +220,7 @@ public class DiversificationBased  extends PruningMethod{
 		}	
 
 		
-		return scoring.DistanceMethod(type, term, map, maxscore);
+		return scoring.DistanceMethod(super.isForQuantiles,type, term.text(), map, maxscore);
 	}
 
 

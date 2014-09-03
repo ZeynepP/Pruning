@@ -1,12 +1,17 @@
 package Pruning.Experiments;
 
 
+import it.unimi.dsi.bits.LongArrayBitVector;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.CollectionStatistics;
 
 import Pruning.Methods.DiversificationBased;
@@ -36,7 +41,7 @@ public class Utils {
 		File out = new File(file);
 		System.out.println(file);
 
-		/*if(indextype >=3) //indextype<9 && 
+	/*	if(indextype >=3) //indextype<9 && 
 		{
 			returnlist.add(0, new float[]{ 0.1f,0.2f,0.3f,0.4f,0.5f,0.6f,0.7f,0.8f,0.9f});
 			returnlist.add(1,new float[]{0.1f,0.2f,0.3f,0.4f,0.5f,0.6f,0.7f,0.8f,0.9f});
@@ -77,22 +82,22 @@ public class Utils {
 		if(type == 0)
 		{
 			filename = "TCP" ;
-			Experiments.pruningmethod = new TCP(isquantiles,indexdir,10, Settings.content,Settings.maxdocs, Settings.collectiontype);
+			Experiments.pruningmethod = new TCP(Settings.isfortest,isquantiles,indexdir,10, Settings.content,Settings.maxdocs, Settings.collectiontype);
 		}
 		else if(type == 1)
 		{
 			filename = "IPU";
-			Experiments.pruningmethod = new IPU(isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
+			Experiments.pruningmethod = new IPU(Settings.isfortest,isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
 		}
 		else if(type == 2)
 		{
 			filename = "2N2P";
-			Experiments.pruningmethod = new ECIR2N2P(isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
+			Experiments.pruningmethod = new ECIR2N2P(Settings.isfortest,isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
 		}
 		else if(type == -1)
 		{
 			filename = "PRP";
-			Experiments.pruningmethod = new PRPP(isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
+			Experiments.pruningmethod = new PRPP( Settings.isfortest, isquantiles,indexdir,Settings.content,Settings.maxdocs, Settings.collectiontype);
 		}
 		else 
 		{ 
@@ -100,7 +105,7 @@ public class Utils {
 			else  if(type ==4)  filename = "Sliding";
 			else if(type == 5) filename = "Dynamic";
 			
-			Experiments.pruningmethod = new DiversificationBased(isquantiles,indexdir,Settings.GMMfile,Settings.maxminfile, Settings.rangefield,type, Settings.collectiontype, Settings.dateinit, Settings.datecount, Settings.windowsize,Settings.slidingsize,Settings.content, Settings.maxdocs);
+			Experiments.pruningmethod = new DiversificationBased(Settings.isfortest ,isquantiles,indexdir,Settings.GMMfile,Settings.maxminfile, Settings.rangefield,type, Settings.collectiontype, Settings.dateinit, Settings.datecount, Settings.windowsize,Settings.slidingsize,Settings.content, Settings.maxdocs);
 		}
 
 		return filename;
@@ -109,6 +114,4 @@ public class Utils {
 		
 	}
 	
-
-
 }

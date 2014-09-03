@@ -21,9 +21,9 @@ import cern.colt.map.OpenIntDoubleHashMap;
 
 public class IPU extends PruningMethod {
 
-	public IPU(boolean isforquantiles, String indexdir, String content, int maxdoc, int type) throws IOException {
+	public IPU(boolean isfortest,boolean isforquantiles, String indexdir, String content, int maxdoc, int type) throws IOException {
 		
-		super(isforquantiles,indexdir,content,maxdoc,type);
+		super(isfortest,isforquantiles,indexdir,content,maxdoc,type);
 		searcher.setSimilarity(new LMJelinekMercerSimilarity(0.6f));
 
 	}
@@ -88,7 +88,7 @@ public class IPU extends PruningMethod {
 
 
 	@Override
-	OpenIntDoubleHashMap GetPostingsScores(String term,DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException 
+	OpenIntDoubleHashMap GetPostingsScores(Term term,DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException 
 	{
 
 		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();

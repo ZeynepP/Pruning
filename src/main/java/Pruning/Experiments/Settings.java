@@ -12,12 +12,15 @@ public class Settings {
 	
 
 	//**** Coming from arguments on main function
-	public static int test = 0;
+	public static boolean isfortest ;
+	public static int fortrec = 0;
 	public static int prunetype = 0;
 	public static int percent = 0;
 	public static int similarity = 0;
 	public static String termsfolder ;
 	public static int maxdocs ;
+	
+	public static int isTemporalExperiment ;
 	/********************** variables based on test collection *******************************/ 
 	
 	// wiki end 1247011200

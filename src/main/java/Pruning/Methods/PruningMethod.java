@@ -92,29 +92,45 @@ public abstract class PruningMethod {
 	Terms allterms ;
 	long sumTotalTermFreq;
 	static byte[] norms = null ;
-	
+	boolean isfortest;
 
 	
 
-	public PruningMethod(boolean isforquantiles, String indexfile, String body, int maxdoc, int collectiont) throws IOException 
+	public PruningMethod(boolean isfortest,boolean isforquantiles, String indexfile, String body, int maxdoc, int collectiont) throws IOException 
 	{
+		this.isfortest = isfortest;
 		dir2 = FSDirectory.open(new File(indexfile));
 		ir =  IndexReader.open(dir2);
 	    searcher = new IndexSearcher(ir);// false read only
-	    irc = ir.getContext();
+	    
 	    searcher.setSimilarity(new BM25Similarity());
-	    MAC_DOC = maxdoc;
+	    MAC_DOC = maxdoc * 100;
+	    System.out.println(MAC_DOC);
 	    content = body;
-	    System.out.println("MAXDOC " + ir.maxDoc());
-	    System.out.println(body);
-		this.isForQuantiles = isforquantiles;
+	    
+	    this.isForQuantiles = isforquantiles;
+	    fields = MultiFields.getFields(ir);
+		allterms = fields.terms(content);
+		
+		if(!isfortest)
+		{
+			
+			 irc = ir.getContext();
+			  System.out.println("MAXDOC " + ir.maxDoc());
+			    System.out.println(body);
+			Initialize(body, collectiont);
+		}
+	}
+	
+	public void Initialize(String body, int collectiont) throws IOException
+	{	
 		collectionStats = searcher.collectionStatistics(body);
 		avgdl = Utils.avgFieldLength(collectionStats);
-		fields = MultiFields.getFields(ir);
-		collectiontype = collectiont;
 		
+		collectiontype = collectiont;
+		System.out.println("Num docs = " + ir.numDocs());
 		try {
-			allterms = fields.terms(content);
+		
 			sumTotalTermFreq = allterms.getSumTotalTermFreq();//collection lenght |C|
 			
 		} catch (IOException e) {
@@ -128,11 +144,12 @@ public abstract class PruningMethod {
 				norms = ArrayUtils.addAll(norms,(byte[])ctx.reader().normValues(content).getSource().getArray());
 				
 			} catch (IOException e) {
-
+	
 				e.printStackTrace();
 			}
 		}
 	}
+	
 	
 	public IndexSearcher GetSearcher()
 	{
@@ -164,7 +181,7 @@ public abstract class PruningMethod {
 	 			TermQuery q = new TermQuery(tempterm);
 	 			TopDocs topdocs = searcher.search(q, MAC_DOC);
 	 			//System.out.println(" total docs " + tempterm.text() + "  " + topdocs.scoreDocs.length);
-	 			temp = GetPostingsScores(tempterm.text(), docsenum, topdocs.scoreDocs);
+	 			temp = GetPostingsScores(tempterm, docsenum, topdocs.scoreDocs);
 	 		}
 	 		if(temp!=null)
 	 		{
@@ -182,7 +199,7 @@ public abstract class PruningMethod {
 	
 
 	abstract OpenIntDoubleHashMap GetPostingsScores(DocsEnum docsEnum, Term tempterm) throws IOException;
-	abstract OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsEnum, ScoreDoc[] docs) throws IOException;	
+	abstract OpenIntDoubleHashMap GetPostingsScores(Term term, DocsEnum docsEnum, ScoreDoc[] docs) throws IOException;	
 	
 	
 }

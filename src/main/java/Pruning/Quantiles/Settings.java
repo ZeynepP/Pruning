@@ -17,7 +17,7 @@ public class Settings {
 	public static String content ; 
 	public static String datefield; // 
 	public static long dateinit; // 
-	
+	public static int quantilestermssize; // 
 
 	public static String machine ; // "/home/pehlivanz/";//
 	public static String noPruningIndex ;
@@ -66,10 +66,93 @@ public class Settings {
 		maxdocs =  Integer.parseInt(configFile.getProperty("maxdocs")); 
 		GMMfile = configFile.getProperty("GMMfile");
 		maxminfile = configFile.getProperty("maxminfile");
+		//quantilestermssize =  Integer.parseInt(configFile.getProperty("quantilestermssize")); 
 	}
 		
 
-	
+	public static String[] STANDARD_QUERIES=// {"voyager"}
+		{
+			"ac milan",
+			"academy award",
+			"babe ruth ",
+			"berlin",
+			"boston red sox ",
+			"chicago bulls", 
+			"george bush",
+			"internet",
+			"iraq",
+			"italian national soccer team ", 
+			"jazz music ",
+			"keith harring ",
+			"kurt cobain  ",
+			"la lakers  ",
+			"mac os x ", 
+			"michael jackson ", 
+			"michael jordan   ",
+			"mickey mouse  ",
+			"microsoft halo   ",
+			"monica lewinsky", 
+			"muhammed  ",
+			"musket  ",
+			"new york yankees ",
+			"nixon ",
+			"pearl harbor ",
+			"pink floyd  ",
+			"poland",
+			"queen victoria ", 
+			"rocky horror picture show  ",
+			"roentgen",
+			"sewing machine",
+			"siemens",
+			"soccer", 
+			"sound of music ",
+			"stefan edberg  ",
+			"thomas edison  ",
+			"vietnam",
+			"voyager ",
+			"woodstock ",
+			"wright brothers",
+			"may 23 2007",
+			"21st century",
+			"1921",
+			"1961",
+			"27 2004",
+			"1991", 
+			"january 18",
+			"2006", 
+			"21st",
+			"february 16 1990",
+			"april 5 1994 ",
+			"21st ",
+			"march 24 2001", 
+			"1982", 
+			"1990s ",
+			"1930s ",
+			"june 2000 ",
+		
+			"7th ",
+			"16th ",
+			"1910s",
+			"1970",
+			"december 1941 ",
+			"1973 ",
+			"1975 ",
+			"1895",
+			"1850s ",
+			"19th ",
+			"21st ", 
+			"1960s ",
+			"july ",
+			"1891",
+			
+			"1977 ",
+			"1994 ",
+			"1905 "
+			
+			
+			
+			
+			};
 	
 	
 }

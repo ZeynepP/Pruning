@@ -2,6 +2,7 @@ package Pruning.Methods;
 
 import java.io.IOException;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DocsAndPositionsEnum;
 import org.apache.lucene.index.DocsEnum;
 import org.apache.lucene.index.MultiFields;
@@ -22,9 +23,9 @@ import cern.colt.map.OpenIntDoubleHashMap;
 public class TCP  extends PruningMethod {
 
 	int topk = 10;
-	public TCP(boolean isforquantiles, String indexdir, int topk, String content, int maxdoc, int type) throws IOException {
+	public TCP(boolean isfortest,boolean isforquantiles, String indexdir, int topk, String content, int maxdoc, int type) throws IOException {
 		
-		super(isforquantiles,indexdir,content,maxdoc,type);
+		super(isfortest,isforquantiles,indexdir,content,maxdoc,type);
 		this.topk=topk;
 		searcher.setSimilarity(new BM25Similarity());
 		
@@ -50,6 +51,7 @@ public class TCP  extends PruningMethod {
 		
 		while ((docid = docsAndPositionsEnum.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
 
+			  
 			    doclen =  NORM_TABLE[ norms[(int) docid] & 0xFF];
 		 	    freq =  docsAndPositionsEnum.freq();
 				docscore = RankingFunctions.BM25(avgdl, freq,  doclen, idf);
@@ -89,7 +91,7 @@ public class TCP  extends PruningMethod {
 			map.forEachPair(procedure);
 		//	System.out.println(map.get(id) + ", " + map.size());
 			
-		
+	//	System.out.println(map.get(1452332));
 		
 		return map;
 		
@@ -98,15 +100,14 @@ public class TCP  extends PruningMethod {
 	}
 
 	
-	OpenIntDoubleHashMap GetPostingsScores(String term,DocsEnum docsEnum,ScoreDoc[] scoredocs) throws IOException {
+	OpenIntDoubleHashMap GetPostingsScores(Term term,DocsEnum docsEnum,ScoreDoc[] scoredocs) throws IOException {
 		final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		int docid;
 		IntArrayList keys = new IntArrayList();
 		DoubleArrayList values = new DoubleArrayList();
 		double docscore;
 		double topkscore = 1;
-
-
+		
 		if(scoredocs.length-topk>0) // no need to sort etc. 
 		{
 			topkscore = scoredocs[topk].score;
@@ -115,6 +116,7 @@ public class TCP  extends PruningMethod {
 		for(int i=0;i<scoredocs.length;i++)
 		{
 				docid = scoredocs[i].doc;
+				
 				
 				docscore = scoredocs[i].score;
 				map.put(docid, docscore/topkscore);

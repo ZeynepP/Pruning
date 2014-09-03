@@ -24,13 +24,12 @@ public class MainExperiments {
 	    Settings.termsfolder = args[3];
 	    Settings.similarity = Integer.valueOf(args[4]);
 	    withthread = Integer.valueOf(args[5]);
-	    int fortests =  Integer.valueOf(args[6]);
-	    
-	    for(int i=-1;i<=5;i++)
-	    {
-	    	Settings.prunetype = i;
-	    	Experiments in = new Experiments(Settings.prunetype);
-	    if(Settings.prunetype<3 || fortests==0)	
+	    Settings.isfortest =  Integer.valueOf(args[6])==1?true:false;
+	    Settings.isTemporalExperiment = Integer.valueOf(args[7]);
+	    Settings.fortrec =  Integer.valueOf(args[8]);
+
+	    Experiments in = new Experiments(Settings.prunetype);
+	    if(Settings.prunetype<3)	
 	    {
 			if(withthread == 1)
 				in.Initialize();
@@ -38,11 +37,11 @@ public class MainExperiments {
 				in.InitializeNoThread();
 
 	    }	
-			in.InitPruneRatios();
-			
-			in.StartPruning();
+		in.InitPruneRatios();
+		
+		in.StartPruning();
 
-	    }
+	    
 
 		System.out.println("OVER OVER");
 	

@@ -88,10 +88,11 @@ public class  DiversificationBased_Utils {
 			  temp = lines.get(i).replaceAll("\'","");
 			  values = temp.split(",");
 			  term = values[0].replaceAll("\'","");
+			  
 			  temp = temp.substring(temp.indexOf(",") + 1);
 			  temp = temp.replace(values[1]+",","");  // after adding FD into gmm result  I did not do it for LA 
 				 
-			  GMMresults.put(term,temp ); 
+			  GMMresults.put(term.substring(1),temp ); 
 
 
 			  

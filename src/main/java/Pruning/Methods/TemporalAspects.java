@@ -140,12 +140,12 @@ public class TemporalAspects {
 		else
 			n = 5	; // start, end, weight, mean ,sd
 		try{
-	
-			 	
+			
+				System.out.println(term);
 			 	result =  DiversificationBased.GMMresults.get(term);
 				result = result.replaceAll("\'", "");
 			 	temp = result.split(",");
-			
+			 	System.out.println(temp);
 				if(temp.length !=0)
 				{
 					 int start = 0;
@@ -159,7 +159,7 @@ public class TemporalAspects {
 							start = (int) Double.parseDouble(temp[i+0].trim());
 							end = (int) Double.parseDouble(temp[i+1].trim());
 							weight = Double.parseDouble(temp[i+2].trim());
-		
+							System.out.println(start + " " + end);
 							rangeSet.put( Range.closed(start , end), weight);//Double.parseDouble(temp[i+4].trim()));
 							
 							//index++;

@@ -5,18 +5,21 @@ import it.unimi.dsi.bits.LongArrayBitVector;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.text.NumberFormat;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+
+import javax.swing.text.Document;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.benchmark.quality.QualityFilterParser;
 import org.apache.lucene.benchmark.quality.QualityQuery;
 import org.apache.lucene.benchmark.quality.QualityQueryParser;
@@ -25,10 +28,12 @@ import org.apache.lucene.benchmark.quality.utils.DocNameExtractor;
 import org.apache.lucene.benchmark.quality.utils.SimpleQQParser;
 import org.apache.lucene.benchmark.quality.utils.TemporalSimpleQQParser;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.NumericRangeFilter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.BM25SimilarityZP;
@@ -39,13 +44,12 @@ import org.apache.lucene.search.similarities.LMJelinekMercerSimilarityZP;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.util.BytesRef;
 
+import Pruning.Methods.PruningMethod;
 import cern.colt.map.OpenIntIntHashMap;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
-
-import Pruning.Methods.PruningMethod;
 
 public class EvaluationMetrics {
 	private NumberFormat nf;
@@ -63,13 +67,13 @@ public class EvaluationMetrics {
 	QualityQueryParser qqParser;
 	QualityFilterParser fParser;
 	KendallsCorrelation kendallcor ;
-	SpearmansCorrelation spearmancor;
+	//SpearmansCorrelation spearmancor;
 	APCorrelation apcorr ;
 	
 	public EvaluationMetrics( PruningMethod p) throws IOException
 	{
 		kendallcor = new KendallsCorrelation();
-		spearmancor = new SpearmansCorrelation();
+		//spearmancor = new SpearmansCorrelation();
 		apcorr = new APCorrelation();
 		
 		topicsFiletemporal = new File(Settings.topicPathtemporal);
@@ -95,103 +99,162 @@ public class EvaluationMetrics {
 	public void runDateField(Prune prune, float pruneratio) throws IOException
 	{
 		double kendallsTau=0;
-		double spearman=0;
 		double ndcg=0;
-
-	   
+		int debug = 0;
+		int maxdoc = Settings.maxdocs;
 	    int nQueries =  qqs.length;
 	    int counter = 0;
 
 	  for (int i=0; i<nQueries; i++) {
-		    	
+		  debug = 1;
 		    	try{
 		    		
 		    	
 				      QualityQuery qq = qqs[i];
 				      Query q = qqParser.parse(qq);
+				      debug = 2;
+				      
+				      
 				      NumericRangeFilter<Long> filter = fParser.parseFilter(qq);
 				      NumericRangeFilter<Long> UnixTimefilter = filter;
 				      if(Settings.collectiontype == 2)
 				      {
 				    	  	UnixTimefilter = NumericRangeFilter.newLongRange(Settings.datefield, (filter.getMin()*N)+ Settings.dateinit, (filter.getMax()*N)+ Settings.dateinit, true, true);
 				      }
-				      
+				      if(Settings.isTemporalExperiment == 0)
+				    	  UnixTimefilter = null;
+				      debug = 3;
+				      //System.out.println(UnixTimefilter.getMax() + "\t" + UnixTimefilter.getMin());
 				      SetSimilarities(false, null);//no pruning
-				      
-				      TopDocs tdnotpruned = searcher.search(q,UnixTimefilter,1000);
+				      debug = 4;
+				      TopDocs tdnotpruned = searcher.search(q,UnixTimefilter,maxdoc);
+				      debug = 5;
 				      ScoreDoc[] sdnotpruned = tdnotpruned.scoreDocs;
-				      double[] nopruningkeys = new double[sdnotpruned.length];
-				      double[]  nopruningvalues = new double[sdnotpruned.length];
+				      debug = 6;
 				  	  OpenIntIntHashMap nopruned = new OpenIntIntHashMap();
-				  	  OpenIntIntHashMap pruned = new OpenIntIntHashMap();
+				  	  
+				  	  
+				  	  Set<Term> terms = new HashSet<Term>();
+					  q.extractTerms(terms);
+					  debug = 7;
+					  double  pruneratioterm = 0;
+					  Iterator<Term> it = terms.iterator();
+				      while(it.hasNext())
+				      {
+				    	  Term t = it.next();
+				    	  try{
+				    	  pruneratioterm+= Experiments.pruneratiobyterm.get(t.text());
+				    	  }
+				    	  catch(Exception ex)
+				    	  {
+				    		  System.out.println("From pruneratioterm");
+				    	  }
+				    	  
+				      }
+				    
+					  pruneratioterm = pruneratioterm/(double)terms.size();
+					  debug = 8;
+					  
+					  
+					  
 				  	  
 				  	  if(sdnotpruned.length > 0)
 				  	  {
-				  		  	  counter++;
-				  		  		
+				  		  	 
+				  		debug = 9;
 						      for(int k=0;k<sdnotpruned.length;k++)
 						      {
 						    	  nopruned.put( sdnotpruned[k].doc,k+1);
-						    	  nopruningkeys[k] = k+1;//sdnotpruned[k].doc;
-						    	 // nopruningvalues[k] = sdnotpruned[k].doc;//sdnotpruned[k].score;
-						    	  
 						      }
-						      SetSimilarities(true, prune.maps);//pruned
-						      TopDocs tdpruned = searcher.search(q,UnixTimefilter,1000);
-						      ScoreDoc[] sdpruned = tdpruned.scoreDocs;
-
-						      double[] prunedkeys = new double[sdpruned.length];
-						      double[]  prunedvalues = new double[sdpruned.length];
-						     
 						      
+						      
+						      debug = 10;     
+						      SetSimilarities(true, prune.maps);//pruned
+						      debug = 11;  
+						      TopDocs tdpruned = searcher.search(q,UnixTimefilter,maxdoc);
+						      ScoreDoc[] sdpruned = tdpruned.scoreDocs;
+						      debug = 12;  
+						      double[] nopruningkeys = new double[nopruned.size()];
+						      double[] prunedkeys = new double[nopruned.size()];
+						      debug = 13;  
 						      for(int k=0;k<sdpruned.length;k++)
 						      {
-						    	  prunedkeys[k] = nopruned.get(sdpruned[k].doc);
-						    	 // prunedkeys[k] = sdpruned[k].doc;
-						    	 // prunedvalues[k] = sdpruned[k].score;
-						    	  
+						    	  int id = nopruned.get(sdpruned[k].doc);
+							    	 if(id == 0)
+							    		 id = maxdoc +k;
+							    	 debug = 14; 
+							    	 nopruningkeys[k] = k +1;
+							    	 prunedkeys[k] = id;
+							    	 debug = 15; 
 						      }
-						    
-						    double temp = -1;
-						    if(nopruningkeys.length <3)
+						   
+						    double k = 0;
+						    double a = 0;
+						   
+						    debug = 16; 
+						    if(nopruningkeys.length > 2)
 						    {
-						    	counter--;
+						    	try{
+						    		k = kendallcor.correlation(nopruningkeys.clone(), prunedkeys.clone(),nopruningkeys.length);	
+						    	}
+						    	catch(Exception ex)
+						    	{
+						    		System.out.println("From kendall " + ex.toString());
+						    	}
 						    	
+							try{
+								a = apcorr.APCorrelation(nopruningkeys.clone(), prunedkeys.clone());						    		
+													    	}
+						    	catch(Exception ex)
+						    	{
+						    		System.out.println("From AP " + ex.toString());
+						    	}
+						    	
+ 	
+						    	 counter++;
+							    System.out.println("APKENDALL" + "\t" + Settings.prunetype + "\t" + i + "\t" + pruneratioterm + "\t" + a + "\t" + k + "\t" + pruneratio  +"\t" + counter);
+							    kendallsTau+=k;
+							    ndcg+=a;
 						    }
-						    if(nopruningkeys.length >=3)
-						    {
-						    	kendallsTau+= (temp==-1?kendallcor.correlation(nopruningkeys.clone(), prunedkeys.clone(),nopruningkeys.length):0);
-						    	ndcg+= (temp==-1?apcorr.APCorrelation(nopruningkeys.clone(), prunedkeys.clone()):0);
-						    	spearman+= (temp==-1?spearmancor.correlation(nopruningkeys.clone(), prunedkeys.clone()):0);
-						    }
-				  	
+						
+						// 	System.out.println("\tFor query " + i + "\t" + pruneratio + "\t" + k + "\t" + a + "\t" + counter + "\t" + nopruningkeys.length + "\t" + prunedkeys.length );
+						    if(nopruningkeys.length!=prunedkeys.length)
+						    		System.out.println("\tFor query " + i + "\t" + pruneratio + "\t" + nopruningkeys.length + "\t" + prunedkeys.length );
+						    
+						    
+				  	  }
+				  	  else
+				  	  {
+				  		System.out.println(q.toString());
+				  	    System.out.println(filter.getMin() + " ** " + filter.getMax() + " ** " + sdnotpruned.length);
+				  	   
 				  	  }
 
 		    	}
 
 		    	catch(Exception ex)
 		    	{
-		    		System.out.println(ex.toString());
+		    		System.out.println(ex.toString() + " )) " + debug);
 		    	}    	
 	  }
-	  	System.out.println( Settings.prunetype + "\t" + pruneratio + "\t" + "AP\t"  +ndcg/(double)counter ) ;
-	  	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Kendall\t"  +kendallsTau/(double)counter ) ;
+	  	System.out.println( "APKENDALL" + "\t" + Settings.prunetype + "\t" + nQueries + "\t" + pruneratio + "\t"  + ndcg/(double)counter + "\t" + kendallsTau/(double)counter + "\t" + pruneratio + "\t" + counter);
+	  	//System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Kendall\t"  ) ;
 	  	//System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Spear\t"  +spearman/(double)counter);
 		    
 	  }
 	  
 	  
-	  public void runRangeFieldWithLogger(Prune prune, float pruneratio) throws IOException
+	
+	  public void runRangeField(Prune prune, float pruneratio) throws IOException
 		{
-		  
 		  StringWriter swnoprune = new StringWriter();
 		  PrintWriter loggernoprune=  new PrintWriter(swnoprune); 
 		  StringWriter swprune = new StringWriter();
 		  PrintWriter loggerprune=  new PrintWriter(swprune); 
 		  
-	      
+		  
+		  
 			double kendallsTau=0;
-			double spearman=0;
 			double ndcg=0;
 			DocNameExtractor rangesxt =  new DocNameExtractor(Settings.rangefield);
 			RangeMap tempmap = TreeRangeMap.create();
@@ -199,112 +262,192 @@ public class EvaluationMetrics {
 		    int nQueries =  qqs.length;
 		    int counter = 0;
 		    int countertemporal = 0;
+		    int maxdoc = Settings.maxdocs;
+		    int countermaxdoc = 1000;
 		    DocNameExtractor xt = new DocNameExtractor(Settings.docNameField);
-		  for (int i=0; i<nQueries; i++) {
+		    for (int i=0; i<nQueries; i++) {
 			    	
 			    	try{
 			    		
 			    	
 					      QualityQuery qq = qqs[i];
 					      Query q = qqParser.parse(qq);
+					     // q = new TermQuery(new Term(Settings.content, "milan"));
 					      NumericRangeFilter<Long> filter = fParser.parseFilter(qq);
 					      
-					      
+					      Set<Term> terms = new HashSet<Term>();
+						  q.extractTerms(terms);
+						 
+						  double  pruneratioterm = 0;
+						  Iterator<Term> it = terms.iterator();
+					      while(it.hasNext())
+					      {
+					    	  Term t = it.next();
+					    	  pruneratioterm+= Experiments.pruneratiobyterm.get(t.text());
+					    	  
+					      }
+					    
+						  pruneratioterm = pruneratioterm/(double)terms.size();
+					    
+						  
+						//  System.out.println(Settings.similarity);
 					      SetSimilarities(false, null);//no pruning
 					      
 					      TopDocs tdnotpruned = searcher.search(q,null,Settings.maxdocs);
 					      ScoreDoc[] sdnotpruned = tdnotpruned.scoreDocs;
-					      double[] nopruningkeys = new double[1000];
-					      double[]  nopruningvalues = new double[1000];
+					     
+					      OpenIntIntHashMap nopruned = new OpenIntIntHashMap();
 					  	  countertemporal = 0;
 					  	  
-					  	  if(sdnotpruned.length > 0)
+					  	  if(sdnotpruned.length > 0 )
 					  	  {
 					  		  	  counter++;
+					  		  	  if( Settings.isTemporalExperiment == 1)
+					  		  	  {
+								      for(int k=0;k<sdnotpruned.length;k++)
+								      {
+								    	 
+								    	  docrange = rangesxt.docName(searcher,sdnotpruned[k].doc);
+										  RangeMap rangeSet = parseTemporalDimension(docrange);
+										  tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
+										    	 
+										
+										    if(tempmap.asMapOfRanges().size() > 0)
+										    {
+										    	
+										    	nopruned.put( sdnotpruned[k].doc,countertemporal+1);
+										    	
+										    	//System.out.println("NoPruned\t" + i + "\t" + sdnotpruned[k].doc + "\t" + sdnotpruned[k].score + "\t" + countertemporal );
+										    	countertemporal++;
+										    	
+										    	
+										    	if(Settings.fortrec == 1 && sdnotpruned[k].score != 0)
+										    	{
+										    		String docName = xt.docName(searcher,sdnotpruned[k].doc);
+											    	loggernoprune.println(
+											    	          qq.getQueryID()       + sep +
+											    	          "Q0"                   + sep +
+											    	          format(docName.replaceAll("_0", ""),20)    + sep +
+											    	          format(""+i,7)        + sep +
+											    	          nf.format(sdnotpruned[k].score) + sep +
+											    	          "nopruned"
+											    	          );
+										    	}
+										    	
+										    }
+								    	  
+										    if(countertemporal == countermaxdoc)
+										    	break;
+								    	 
+								    	  
+								      }
+								     
+					  		  	  }
+					  		  	  else
+					  		  	  {
+					  		  		 for(int k=0;k<sdnotpruned.length;k++)
+								      {	
+					  		  			nopruned.put( sdnotpruned[k].doc,k+1);
+					  		  		if(Settings.fortrec == 1  && sdnotpruned[k].score != 0)
+							    	{
+							    		String docName = xt.docName(searcher,sdnotpruned[k].doc);
+								    	loggernoprune.println(
+								    	          qq.getQueryID()       + sep +
+								    	          "Q0"                   + sep +
+								    	          format(docName.replaceAll("_0", ""),20)    + sep +
+								    	          format(""+i,7)        + sep +
+								    	          nf.format(sdnotpruned[k].score) + sep +
+								    	          "nopruned_notemporal"
+								    	          );
+							    	}							    	
+								      }  
+					  		  	  }
 					  		  	  
-							      for(int k=0;k<sdnotpruned.length;k++)
-							      {
-							    	 
-							    	  docrange = rangesxt.docName(searcher,sdnotpruned[k].doc);
-									  RangeMap rangeSet = parseTemporalDimension(docrange);
-									  tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
-									    	 
-									    	
-									    if(tempmap.asMapOfRanges().size() > 0)
-									    {
-									    	nopruningkeys[countertemporal] = sdnotpruned[k].doc;
-									    	nopruningvalues[countertemporal] = sdnotpruned[k].score;
-									    	countertemporal++;
-									    	String docName = xt.docName(searcher,sdnotpruned[k].doc);
-									    	loggernoprune.println(
-									    	          qq.getQueryID()       + sep +
-									    	          "Q0"                   + sep +
-									    	          format(docName.replaceAll("_0", ""),20)    + sep +
-									    	          format(""+i,7)        + sep +
-									    	          nf.format(sdnotpruned[k].score) + sep +
-									    	          "lucene"
-									    	          );
-									    }
-							    	  
-									    if(countertemporal == 1000)
-									    	break;
-							    	 
-							    	  
-							      }
-							     
-							   
+					  		  	  
 							      SetSimilarities(true, prune.maps);//pruned
 							      TopDocs tdpruned = searcher.search(q,null,Settings.maxdocs);
 							      ScoreDoc[] sdpruned = tdpruned.scoreDocs;
+							
 							      
-							      
-							      
-							      double[] prunedkeys = new double[nopruningkeys.length];
-							      double[]  prunedvalues = new double[nopruningkeys.length];
+							      double[] nopruningkeys = new double[Math.min(nopruned.size(),maxdoc)];
+							      double[] prunedkeys =  new double[Math.min(nopruned.size(),maxdoc)];
+							     
 							      countertemporal = 0;
-							      
-							      for(int k=0;k<sdpruned.length;k++) 
+							      if(Settings.isTemporalExperiment == 1)
 							      {
-								    	docrange = rangesxt.docName(searcher,sdpruned[k].doc);
-									    RangeMap rangeSet = parseTemporalDimension(docrange);
-									    tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
-									    	 
-									    	
-									    if(tempmap.asMapOfRanges().size() > 0)
-									    {
-									    	 prunedkeys[countertemporal] = sdpruned[k].doc;
-									    	 prunedvalues[countertemporal] = sdpruned[k].score;
-									    	 countertemporal++;
-									    	 String docName = xt.docName(searcher,sdpruned[k].doc);
-									    	 loggerprune.println(
-									    	          qq.getQueryID()       + sep +
-									    	          "Q0"                   + sep +
-									    	          format(docName.replaceAll("_0", ""),20)    + sep +
-									    	          format(""+i,7)        + sep +
-									    	          nf.format(sdpruned[k].score) + sep +
-									    	          Settings.prunetype
-									    	          );
-									    }
-							    	  
-									    if(countertemporal == 1000)
-									    	break;
-							    	 
+								      for(int k=0;k<sdpruned.length;k++) 
+								      {
+									    	docrange = rangesxt.docName(searcher,sdpruned[k].doc);
+										    RangeMap rangeSet = parseTemporalDimension(docrange);
+										    tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
+										    	 
+										    
+										    if(tempmap.asMapOfRanges().size() > 0)
+										    {
+										    	 int id = nopruned.get(sdpruned[k].doc);
+										    	 if(id == 0)
+										    		 id = maxdoc +countertemporal;
+										    	 nopruningkeys[countertemporal] = countertemporal +1;
+										    	 prunedkeys[countertemporal] = id;
+										    	// prunedkeys[countertemporal] = sdpruned[k].doc;
+										    	 countertemporal++;
+										    	 
+										    	 
+										    	 if(Settings.fortrec == 1  && sdnotpruned[k].score != 0)
+										    	 {
+										    		 String docName = xt.docName(searcher,sdpruned[k].doc);
+											    	 loggerprune.println(
+											    	          qq.getQueryID()       + sep +
+											    	          "Q0"                   + sep +
+											    	          format(docName.replaceAll("_0", ""),20)    + sep +
+											    	          format(""+i,7)        + sep +
+											    	          nf.format(sdpruned[k].score) + sep +
+											    	          Settings.prunetype
+											    	          );
+										    		 
+										    	 }
+										    	
+										    }
+								    	  
+										    if(countertemporal == countermaxdoc)
+										    	break;
+								    	 
+								    	  
+								      }
+							      }
+							      else
+							      {
+							    	  for(int k=0;k<Math.min(maxdoc,sdpruned.length);k++) 
+								      {
+							    		  prunedkeys[k] = nopruned.get(sdpruned[k].doc);
+							    		  nopruningkeys[k] = k +1;
+							    		  
+							    		  if(Settings.fortrec == 1  && sdnotpruned[k].score != 0)
+							    		  {
+							    			  String docName = xt.docName(searcher,sdpruned[k].doc);
+										    	 loggerprune.println(
+										    	          qq.getQueryID()       + sep +
+										    	          "Q0"                   + sep +
+										    	          format(docName.replaceAll("_0", ""),20)    + sep +
+										    	          format(""+i,7)        + sep +
+										    	          nf.format(sdpruned[k].score) + sep +
+										    	          Settings.prunetype + "notemporal"
+										    	          );
+							    		  }
+								      }
 							    	  
 							      }
 							      
-							      
-								    double temp = -1;
-								    if(nopruningkeys.length == 1)
-								    {
-								    	if(nopruningkeys[0] == prunedkeys[0])
-								    		temp=0;
-								    	else temp = 1;
-								    	
-								    }
-								      
-								    kendallsTau+= (temp==-1?kendallcor.correlation(nopruningkeys.clone(), prunedkeys.clone(),nopruningkeys.length):0);
-								    ndcg+= (temp==-1?apcorr.APCorrelation(nopruningkeys.clone(), prunedkeys.clone()):0);
-								    spearman+= (temp==-1?spearmancor.correlation(nopruningkeys.clone(), prunedkeys.clone()):0); 
+							   
+							    double k = kendallcor.correlation(nopruningkeys.clone(), prunedkeys.clone(),nopruningkeys.length);
+							    double a = apcorr.APCorrelation(nopruningkeys.clone(), prunedkeys.clone());
+							    
+							    
+							    
+							    System.out.println("APKENDALL" + "\t" + Settings.prunetype + "\t" + i + "\t" + pruneratioterm + "\t" + a + "\t" + k  + "\t" + pruneratio);
+							    kendallsTau+= k;
+							    ndcg+= a;
+								    //spearman+= (temp==-1?spearmancor.correlation(nopruningkeys.clone(), prunedkeys.clone()):0); 
 						  	
 					  	  }
 
@@ -320,144 +463,19 @@ public class EvaluationMetrics {
 		
 			    
 		  }
-
-		     
-	     BufferedReader resultsnopruning = new BufferedReader(new StringReader(swnoprune.toString()));
-	     BufferedReader resultspruned = new BufferedReader(new StringReader(swprune.toString()));
-	     
-	     FileUtils.writeStringToFile(new File("NoprunedWIKI"), swnoprune.toString());
-	     FileUtils.writeStringToFile(new File(Settings.prunetype + "_" + pruneratio), swprune.toString());
-	     
-
-	      
-		  
-	  	System.out.println( Settings.prunetype + "\t" + pruneratio + "\t" + "NDCG\t"  +ndcg/(double)counter ) ;
-	  	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Kendall\t"  +kendallsTau/(double)counter ) ;
-	  	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Spear\t"  +spearman/(double)counter);
-  	
-  	
-	}
-	  public void runRangeField(Prune prune, float pruneratio) throws IOException
-		{
-		
-			double kendallsTau=0;
-			double spearman=0;
-			double ndcg=0;
-			DocNameExtractor rangesxt =  new DocNameExtractor(Settings.rangefield);
-			RangeMap tempmap = TreeRangeMap.create();
-			String docrange;
-		    int nQueries =  qqs.length;
-		    int counter = 0;
-		    int countertemporal = 0;
-		  for (int i=0; i<nQueries; i++) {
-			    	
-			    	try{
-			    		
-			    	
-					      QualityQuery qq = qqs[i];
-					      Query q = qqParser.parse(qq);
-					      NumericRangeFilter<Long> filter = fParser.parseFilter(qq);
-					      
-					      
-					      SetSimilarities(false, null);//no pruning
-					      
-					      TopDocs tdnotpruned = searcher.search(q,null,Settings.maxdocs);
-					      ScoreDoc[] sdnotpruned = tdnotpruned.scoreDocs;
-					      double[] nopruningkeys = new double[1000];
-					      
-					  	  countertemporal = 0;
-					  	  
-					  	  if(sdnotpruned.length > 0)
-					  	  {
-					  		  	  counter++;
-					  		  	  
-							      for(int k=0;k<sdnotpruned.length;k++)
-							      {
-							    	 
-							    	  docrange = rangesxt.docName(searcher,sdnotpruned[k].doc);
-									  RangeMap rangeSet = parseTemporalDimension(docrange);
-									  tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
-									    	 
-									    	
-									    if(tempmap.asMapOfRanges().size() > 0)
-									    {
-									    	nopruningkeys[countertemporal] = sdnotpruned[k].doc;
-									    	
-									    	//System.out.println("NoPruned\t" + i + "\t" + sdnotpruned[k].doc + "\t" + sdnotpruned[k].score + "\t" + countertemporal );
-									    	countertemporal++;
-									    	
-									    }
-							    	  
-									    if(countertemporal == 1000)
-									    	break;
-							    	 
-							    	  
-							      }
-							     
-							   
-							      SetSimilarities(true, prune.maps);//pruned
-							      TopDocs tdpruned = searcher.search(q,null,Settings.maxdocs);
-							      ScoreDoc[] sdpruned = tdpruned.scoreDocs;
-							      
-							      
-							      
-							      double[] prunedkeys = new double[nopruningkeys.length];
-							     
-							      countertemporal = 0;
-							      
-							      for(int k=0;k<sdpruned.length;k++) 
-							      {
-								    	docrange = rangesxt.docName(searcher,sdpruned[k].doc);
-									    RangeMap rangeSet = parseTemporalDimension(docrange);
-									    tempmap = rangeSet.subRangeMap(Range.closed(filter.getMin(), filter.getMax()));
-									    	 
-									    	
-									    if(tempmap.asMapOfRanges().size() > 0)
-									    {
-									    	 prunedkeys[countertemporal] = sdpruned[k].doc;
-									    	 countertemporal++;
-									    	
-									    }
-							    	  
-									    if(countertemporal == 1000)
-									    	break;
-							    	 
-							    	  
-							      }
-							      
-							      
-							      double temp = -1;
-								    if(nopruningkeys.length == 1)
-								    {
-								    	if(nopruningkeys[0] == prunedkeys[0])
-								    		temp=0;
-								    	else temp = 1;
-								    	
-								    }
-								      
-								    kendallsTau+= (temp==-1?kendallcor.correlation(nopruningkeys.clone(), prunedkeys.clone(),nopruningkeys.length):0);
-								    ndcg+= (temp==-1?apcorr.APCorrelation(nopruningkeys.clone(), prunedkeys.clone()):0);
-								    spearman+= (temp==-1?spearmancor.correlation(nopruningkeys.clone(), prunedkeys.clone()):0); 
-						  	
-					  	  }
-
-			    	}
-
-			    	catch(Exception ex)
-			    	{
-			    		System.out.println(ex.toString());
-			    	}
-			    	
-			    	
-			    	
-		
-			    
-		  }
-	      
-		  
-	  	System.out.println( Settings.prunetype + "\t" + pruneratio + "\t" + "NDCG\t"  +ndcg/(double)counter ) ;
-	  	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Kendall\t"  +kendallsTau/(double)counter ) ;
-	  	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Spear\t"  +spearman/(double)counter);
+		    
+		    if(Settings.fortrec == 1)
+		    {
+		    
+			     FileUtils.writeStringToFile(new File("NoprunedWIKI" + Settings.isTemporalExperiment ), swnoprune.toString());
+			     FileUtils.writeStringToFile(new File(Settings.prunetype + "_" + pruneratio + Settings.isTemporalExperiment), swprune.toString());
+			     
+		    	
+		    }
+		  System.out.println("APKENDALL" + "\t" + Settings.prunetype + "\t" + nQueries + "\t" + pruneratio + "\t" + ndcg/(double)counter + "\t" +  kendallsTau/(double)counter + "\t" + pruneratio);
+	  	//System.out.println( Settings.prunetype + "\t" + pruneratio + "\t" + "AP\t"  +ndcg/(double)counter ) ;
+	  //	System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Kendall\t"  +kendallsTau/(double)counter ) ;
+	  	//System.out.println(Settings.prunetype + "\t" + pruneratio + "\t" + "Spear\t"  +spearman/(double)counter);
 	
 	
 	}

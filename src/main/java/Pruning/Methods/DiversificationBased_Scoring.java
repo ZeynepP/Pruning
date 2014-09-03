@@ -36,6 +36,7 @@ public class DiversificationBased_Scoring{
 	public void GetDocumentsWindowsGuava(int docid, String date, double docscore, double alpha,long dateinit, int datecount) 
 	{
 
+
 			//Set tempwindows = new HashSet();
 			String[] temp ;
 			String[] dates = null;
@@ -77,12 +78,12 @@ public class DiversificationBased_Scoring{
 			}
 			
 
-			
+
 		
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unused" })
-	public  OpenIntDoubleHashMap  DistanceMethod(int type,String term,OpenIntDoubleHashMap mapdocscore, final double maxscore) throws IOException
+	public  OpenIntDoubleHashMap  DistanceMethod(boolean isForQuantiles,int type,String term,OpenIntDoubleHashMap mapdocscore, final double maxscore) throws IOException
 	{
 		int docid = 0;
 		double docscore = 0;
@@ -92,6 +93,7 @@ public class DiversificationBased_Scoring{
 
 		//final OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		final OpenIntDoubleHashMap mapdistance = new  OpenIntDoubleHashMap();
+		//final OpenIntDoubleHashMap mapdistancetest = new  OpenIntDoubleHashMap();
 
 		double x = 0;
 		double score = 0;
@@ -109,22 +111,42 @@ public class DiversificationBased_Scoring{
 					//map.put(arg0, score); 
 					double dist =  calculateDistance(1, 1, x , (arg1/maxscore));
 				    mapdistance.put(arg0, dist );
+				 //   mapdistancetest.put(arg0, arg1/maxscore * x);
+				    
+				    
 				}
 			    return true;
 			}
 		};
 		mapdocscore.forEachPair( p);
 		
-		IntArrayList keys = mapdistance.keys();
-		//String result = "";
-		DoubleArrayList values= mapdistance.values();
-		//mapdistance.keysSortedByValue(keys);
+		if(!isForQuantiles)
+		{
+			IntArrayList keys = mapdistance.keys();
+			//String result = "";
+			DoubleArrayList values= mapdistance.values();
+		//	mapdistance.pairsSortedByValue(keys, values);
+			String result ="";
+			
+			for(int i =0;i<values.size();i++)
+			{
+				
+				result = result + "," + keys.get(i) + "->" + values.get(i);
+			}
+		//	mapdistancetest.pairsSortedByValue(keys, values);
 		
-		String result ="";
-		for(int i =0;i<values.size();i++)
-			result = result + "," + keys.get(i) + "->" + values.get(i);
-		//System.out.println( mapdocscore.toString());
-		FileUtils.writeStringToFile(new File(Settings.termsfolder + type + "_"+ term + ".txt"), result);
+		/*	String resulttest = "";
+			for(int i =0;i<values.size();i++)
+			{		if(i > values.size() - 10)
+						System.out.println(keys.get(i) + " -> " + values.get(i));
+				resulttest = resulttest + "," + keys.get(i) + "->" + values.get(i);
+			}
+			*/
+			
+			
+			//System.out.println( mapdocscore.toString());
+			FileUtils.writeStringToFile(new File(Settings.termsfolder + type + "_"+ term + ".txt"), result);
+		}
 		return mapdistance;
 		
 

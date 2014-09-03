@@ -41,6 +41,7 @@ public class Experiments {
 		this.type = type;
 		filename = Utils.SetPruneTypeandFilename(type,Settings.noPruningIndex,false); 
 		GetVocabulary();
+	
 		
 	}
 	
@@ -117,7 +118,7 @@ public class Experiments {
 	    		{
 
 	    			pruneratio = prune.PruningTemporal(indexten, Settings.percent==1, Settings.prunetype == -2);
-	    			pruneratio = pruneden;
+	    			pruneratio =  pruneden;
 	
 	    		}
 	    		else 
@@ -187,7 +188,7 @@ public class Experiments {
 			
 		terms.addAll(tempterms); // to keep inscoring overall our terms 
 		Collections.sort(terms, Collections.reverseOrder());// i NEED TO SORT because I use start end to work on multiple clusters
-		//System.out.println("Number of total terms : " + terms.size());
+		System.out.println("Number of total terms : " + terms.size());
 	}
 
 	

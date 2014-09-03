@@ -21,13 +21,20 @@ public class PRPP extends PruningMethod {
 	double mean;
 	double sd;
 
-	public PRPP(boolean isforquantiles,String indexdir, String content, int maxdoc, int type) throws IOException {
+	public PRPP(boolean isfortest,boolean isforquantiles,String indexdir, String content, int maxdoc, int type) throws IOException {
 		
-		super(isforquantiles,indexdir,content,maxdoc,type);
+		super(isfortest,isforquantiles,indexdir,content,maxdoc,type);
 	
-
-		mean = mean(); 
-		sd = standardDeviation();
+		if(collectiontype == 2)
+		{
+			mean = 612.6937866210938 ;
+			sd = 5.617415904998779;
+		}
+		else
+		{
+			mean = mean(); 
+			sd = standardDeviation();
+		}
 		searcher.setSimilarity(new LMJelinekMercerSimilarity(0.6f));
 		System.out.println("mean = " + mean + " :: sd = " + sd);
 		
@@ -70,13 +77,14 @@ public class PRPP extends PruningMethod {
 		
 	}
 	
-	OpenIntDoubleHashMap GetPostingsScores(String term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException {
+	OpenIntDoubleHashMap GetPostingsScores(Term term, DocsEnum docsAndPositionsEnum, ScoreDoc[] scoredocs) throws IOException {
 
 		TermsEnum termEnum = allterms.iterator(null);
 		OpenIntDoubleHashMap map = new  OpenIntDoubleHashMap();
 		int docid;
 		IntArrayList keys = new IntArrayList();
 		DoubleArrayList values = new DoubleArrayList();
+		termEnum.seekExact(term.bytes(), true);
 		float  sumDocFreq = termEnum.totalTermFreq();
 		float collectionprobab= (sumDocFreq) / (sumTotalTermFreq);
 		
