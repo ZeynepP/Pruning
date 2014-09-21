@@ -1,5 +1,11 @@
 package Pruning.Experiments;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.util.Version;
+
 
 public class MainExperiments {
 
@@ -27,9 +33,18 @@ public class MainExperiments {
 	    Settings.isfortest =  Integer.valueOf(args[6])==1?true:false;
 	    Settings.isTemporalExperiment = Integer.valueOf(args[7]);
 	    Settings.fortrec =  Integer.valueOf(args[8]);
+	    Settings.start =  Integer.valueOf(args[9]);
+	    Settings.end =  Integer.valueOf(args[10]);
 
 	    Experiments in = new Experiments(Settings.prunetype);
-	    if(Settings.prunetype<3)	
+	  /*  Analyzer basicana = new StandardAnalyzer(Version.LUCENE_CURRENT);
+	    IndexWriterConfig configwriter = new IndexWriterConfig(Version.LUCENE_CURRENT, basicana);
+		IndexWriter indexWriter = new IndexWriter(in.pruningmethod.dir2,configwriter);
+		indexWriter.forceMerge(1);
+		indexWriter.commit();
+		indexWriter.close();
+	    */
+	    if(Settings.prunetype<3|| Settings.isfortest==false)	
 	    {
 			if(withthread == 1)
 				in.Initialize();
@@ -52,3 +67,4 @@ public class MainExperiments {
 	
 
 }
+
